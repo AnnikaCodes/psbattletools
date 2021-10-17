@@ -4,25 +4,23 @@
 mod directory;
 mod statistics;
 
-use statistics::StatsMutexError;
-use std::{any::Any, sync::MutexGuard};
+use directory::ParallelDirectoryParser;
+
+use crate::statistics::StatisticsDirectoryParser;
 
 #[derive(Debug)]
-pub enum BattleToolsError<'a> {
+pub enum BattleToolsError {
     IOError(std::io::Error),
-    StatsMutexError(StatsMutexError<'a>),
 }
-impl<'a> From<std::io::Error> for BattleToolsError<'a> {
+impl From<std::io::Error> for BattleToolsError {
     fn from(error: std::io::Error) -> Self {
         BattleToolsError::IOError(error)
-    }
-}
-impl<'a> From<StatsMutexError<'a>> for BattleToolsError<'a> {
-    fn from(error: StatsMutexError<'a>) -> Self {
-        BattleToolsError::StatsMutexError(error)
     }
 }
 
 fn main() {
     println!("Hello, world!");
+    let format_dir = std::path::PathBuf::from("test-scratch");
+    let mut parser = StatisticsDirectoryParser::new(None);
+    parser.handle_directory(format_dir).unwrap();
 }
