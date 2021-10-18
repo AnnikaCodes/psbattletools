@@ -1,4 +1,6 @@
 # psbattletools
+![Crates.io](https://img.shields.io/crates/v/psbattletools) [![codecov](https://codecov.io/gh/AnnikaCodes/psbattletools/branch/main/graph/badge.svg?token=AA6F4XJVIA)](https://codecov.io/gh/AnnikaCodes/psbattletools)
+
 `psbattletools` is a command-line tool written in Rust for manipulating [Pokémon Showdown](https://github.com/smogon/pokemon-showdown) battle logs.
 ## Installation
 `psbattletools` currently requires nightly Rust, since it uses Rust's built-in benchmarker. If you don't have nightly Rust, install [`rustup`](https://rustup.rs/), then run `rustup install nightly`.
