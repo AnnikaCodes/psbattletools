@@ -38,41 +38,24 @@ mod tests {
     extern crate test;
 
     use super::*;
-    use lazy_static::lazy_static;
-    use std::{fs, path::PathBuf};
+    use crate::testing::*;
     use test::Bencher;
-
-    lazy_static! {
-        static ref TEST_DIR: PathBuf = PathBuf::from("test-scratch/day1");
-    }
-
-    fn build_test_dir(num_files: u32) -> std::io::Result<()> {
-        let src_file = &PathBuf::from("src/benchmark-data.json");
-        fs::create_dir_all(&TEST_DIR.clone())?;
-        for i in 0..num_files {
-            let mut file = TEST_DIR.clone();
-            file.push(format!("{}.json", i));
-            fs::copy(src_file, file)?;
-        }
-        Ok(())
-    }
 
     #[bench]
     fn bench_handle_directory_1k(b: &mut Bencher) {
         build_test_dir(1_000).unwrap();
 
-        let format_dir = TEST_DIR.parent().unwrap().to_owned();
         let mut parser = StatisticsDirectoryParser::new(None);
-        b.iter(|| parser.handle_directory(format_dir.clone()).unwrap());
+        b.iter(|| parser.handle_directory(TEST_ROOT_DIR.clone()).unwrap());
     }
 
     #[test]
     fn test_handle_directory_1k() {
         build_test_dir(1_000).unwrap();
-        let format_dir = TEST_DIR.parent().unwrap().to_owned();
         let mut parser = StatisticsDirectoryParser::new(None);
-        parser.handle_directory(format_dir).unwrap();
+        parser.handle_directory(TEST_ROOT_DIR.to_owned()).unwrap();
         let mut stats = parser.stats;
+        dbg!(&stats);
 
         assert_eq!(
             stats.to_csv(),

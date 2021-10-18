@@ -3,6 +3,7 @@
 
 mod directory;
 mod statistics;
+mod testing;
 
 use directory::ParallelDirectoryParser;
 
