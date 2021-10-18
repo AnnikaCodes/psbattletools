@@ -2,12 +2,17 @@
 mod stats;
 
 use crate::{directory::*, BattleToolsError};
-use stats::{GameResult, Stats, StatsOutput};
+use stats::{GameResult, Stats};
+
+pub trait StatsOutput {
+    fn to_human_readable(&mut self) -> String;
+    fn to_csv(&mut self) -> String;
+}
 
 /// Parses a directory and computes winrates on the battles within.
 pub struct StatisticsDirectoryParser {
     min_elo: u64,
-    pub stats: Stats,
+    stats: Stats,
 }
 
 impl StatisticsDirectoryParser {
@@ -33,6 +38,15 @@ impl LogParser<Vec<GameResult>> for StatisticsDirectoryParser {
     }
 }
 
+impl StatsOutput for StatisticsDirectoryParser {
+    fn to_human_readable(&mut self) -> String {
+        self.stats.to_human_readable()
+    }
+    fn to_csv(&mut self) -> String {
+        self.stats.to_csv()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     extern crate test;
@@ -46,14 +60,20 @@ mod tests {
         build_test_dir(1_000).unwrap();
 
         let mut parser = StatisticsDirectoryParser::new(None);
-        b.iter(|| parser.handle_directory(TEST_ROOT_DIR.clone()).unwrap());
+        b.iter(|| {
+            parser
+                .handle_directories(vec![TEST_ROOT_DIR.clone()])
+                .unwrap()
+        });
     }
 
     #[test]
     fn test_handle_directory_1k() {
         build_test_dir(1_000).unwrap();
         let mut parser = StatisticsDirectoryParser::new(None);
-        parser.handle_directory(TEST_ROOT_DIR.to_owned()).unwrap();
+        parser
+            .handle_directories(vec![TEST_ROOT_DIR.to_owned()])
+            .unwrap();
         let mut stats = parser.stats;
         dbg!(&stats);
 

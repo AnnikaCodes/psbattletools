@@ -26,7 +26,7 @@ pub trait LogParser<R> {
 
 /// Iterates over directories and executes code on each log file in parallel.
 pub trait ParallelDirectoryParser<R> {
-    fn handle_directory(&mut self, dir: PathBuf) -> Result<(), BattleToolsError>;
+    fn handle_directories(&mut self, dirs: Vec<PathBuf>) -> Result<(), BattleToolsError>;
 }
 
 impl<T, R> ParallelDirectoryParser<R> for T
@@ -34,7 +34,7 @@ where
     T: LogParser<R> + Sync + Send,
     R: Send,
 {
-    fn handle_directory(&mut self, path: PathBuf) -> Result<(), BattleToolsError> {
+    fn handle_directories(&mut self, dirs: Vec<PathBuf>) -> Result<(), BattleToolsError> {
         // We don't know if we'll get a directory with lots of subdirectories or one with lots of JSON files,
         // so we always use parallel iteration.
 
@@ -42,10 +42,9 @@ where
         // and add to this mutex whenever we find a subdirectory. This means that we can collect ALL the results into
         // one Vec, and guarantee that handle_results is only called once. It's not too much of a performance to use a mutex,
         // since in PS log structures, there are not generally JSON logs and subdirectories in the same directory.
-        let sub_directories = vec![path];
         let mut results: Vec<R> = vec![];
 
-        let subdirectories_mutex = Mutex::new(sub_directories);
+        let subdirectories_mutex = Mutex::new(dirs);
         let handle_specific_dir = |p: &PathBuf| -> Result<Vec<R>, BattleToolsError> {
             println!("Parsing {}...", p.display());
             let result_vec = fs::read_dir(p)?

@@ -5,8 +5,10 @@ mod directory;
 mod statistics;
 mod testing;
 
-use std::path::PathBuf;
+use directory::ParallelDirectoryParser;
+use statistics::{StatisticsDirectoryParser, StatsOutput};
 
+use std::{fs, path::PathBuf};
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
@@ -112,7 +114,7 @@ impl From<std::io::Error> for BattleToolsError {
     }
 }
 
-fn main() {
+fn main() -> Result<(), BattleToolsError> {
     let options = Options::from_args();
     match options.command {
         Subcommand::Statistics {
@@ -121,7 +123,23 @@ fn main() {
             human_readable_path,
             minimum_elo,
         } => {
-            unimplemented!();
+            let mut parser = StatisticsDirectoryParser::new(minimum_elo);
+            parser.handle_directories(directories)?;
+
+            let mut produced_output = false;
+            if let Some(csv_path) = csv_path {
+                fs::write(csv_path, parser.to_csv())?;
+                produced_output = true;
+            }
+            if let Some(human_readable_path) = human_readable_path {
+                fs::write(human_readable_path, parser.to_human_readable())?;
+                produced_output = true;
+            }
+
+            // If we haven't written to any output files, print the results as a pretty-print to stdout
+            if !produced_output {
+                println!("{}", parser.to_human_readable());
+            }
         }
         Subcommand::Search {
             username,
@@ -138,4 +156,6 @@ fn main() {
             unimplemented!();
         }
     }
+
+    Ok(())
 }

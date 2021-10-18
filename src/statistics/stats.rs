@@ -1,14 +1,8 @@
 // Winrates code - from https://github.com/AnnikaCodes/randbats-winrates/blob/main/src/stats.rs
-extern crate test;
 use indexmap::IndexMap;
 use prettytable::*;
 
 use crate::BattleToolsError;
-
-pub trait StatsOutput {
-    fn to_human_readable(&mut self) -> String;
-    fn to_csv(&mut self) -> String;
-}
 
 #[derive(Copy, Clone)]
 struct FinalStats {
@@ -156,7 +150,7 @@ impl Stats {
     }
 }
 
-impl StatsOutput for Stats {
+impl super::StatsOutput for Stats {
     fn to_csv(&mut self) -> String {
         self.sort();
 
@@ -207,7 +201,8 @@ impl StatsOutput for Stats {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    extern crate test;
+    use super::{super::StatsOutput, Stats};
     use lazy_static::lazy_static;
     use test::Bencher;
 
