@@ -75,7 +75,6 @@ mod tests {
             .handle_directories(vec![TEST_ROOT_DIR.to_owned()])
             .unwrap();
         let mut stats = parser.stats;
-        dbg!(&stats);
 
         assert_eq!(
             stats.to_csv(),

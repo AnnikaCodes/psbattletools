@@ -188,6 +188,8 @@ fn main() -> Result<(), BattleToolsError> {
             output_dir,
         } => {
             // TODO: Add --safe option
+            // create dir if needed
+            fs::create_dir_all(&output_dir)?;
             let mut anonymizer = AnonymizingDirectoryParser::new(false, output_dir);
             anonymizer.handle_directories(directories)?;
         }

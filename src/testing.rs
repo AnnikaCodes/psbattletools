@@ -3,9 +3,9 @@ use lazy_static::lazy_static;
 use std::path::PathBuf;
 
 lazy_static! {
-    pub static ref TEST_ROOT_DIR: PathBuf = PathBuf::from("test-scratch");
-    pub static ref TEST_ROOT_DIR_DAY1: PathBuf = PathBuf::from("test-scratch/day1");
-    pub static ref TEST_ROOT_DIR_DAY2: PathBuf = PathBuf::from("test-scratch/day2");
+    pub static ref TEST_ROOT_DIR: PathBuf = PathBuf::from("test-scratch/battles");
+    pub static ref TEST_ROOT_DIR_DAY1: PathBuf = PathBuf::from("test-scratch/battles/day1");
+    pub static ref TEST_ROOT_DIR_DAY2: PathBuf = PathBuf::from("test-scratch/battles/day2");
 }
 
 pub fn build_test_dir(num_files: u32) -> std::io::Result<()> {
