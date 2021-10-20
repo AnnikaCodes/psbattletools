@@ -111,6 +111,7 @@ struct Options {
 pub enum BattleToolsError {
     IOError(std::io::Error),
     InvalidLog(String),
+    PathConversion(String),
 }
 impl From<std::io::Error> for BattleToolsError {
     fn from(error: std::io::Error) -> Self {

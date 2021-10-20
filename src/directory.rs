@@ -4,7 +4,7 @@ use rayon::prelude::*;
 use std::{
     fs,
     marker::{Send, Sync},
-    path::PathBuf,
+    path::{PathBuf, Path},
     sync::Mutex,
 };
 
@@ -13,7 +13,7 @@ use crate::BattleToolsError;
 /// Anything that wants to parse logs should implement this
 pub trait LogParser<R> {
     /// Parses an individual log file's JSON
-    fn handle_log_file(&self, raw_json: String) -> Result<R, BattleToolsError>;
+    fn handle_log_file(&self, raw_json: String, file_path: &Path) -> Result<R, BattleToolsError>;
     /// Parses the results from an entire directory.
     /// Guaranteed to be only called once per invocation of ParallelDirectoryParser::handle_directory;
     /// if subdirectories are found, their parse results will be combined together and passed to handle_results.
@@ -70,17 +70,18 @@ where
                             return None;
                         }
 
+                        let path = entry.path();
                         let raw_json = match fs::read_to_string(entry.path()) {
                             Ok(s) => s,
                             Err(e) => {
-                                eprintln!("Error reading file '{:?}': {:?}", entry.path(), e);
+                                eprintln!("Error reading file '{:?}': {:?}", path, e);
                                 return None;
                             }
                         };
-                        match self.handle_log_file(raw_json) {
+                        match self.handle_log_file(raw_json, &path) {
                             Ok(res) => Some(res),
                             Err(e) => {
-                                eprintln!("Error parsing file '{:?}': {:?}", entry.path(), e);
+                                eprintln!("Error parsing file '{:?}': {:?}", path, e);
                                 None
                             }
                         }
