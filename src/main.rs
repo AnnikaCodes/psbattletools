@@ -5,8 +5,10 @@ mod id;
 mod directory;
 mod statistics;
 mod search;
+mod anonymize;
 mod testing;
 
+use anonymize::AnonymizingDirectoryParser;
 use directory::ParallelDirectoryParser;
 use statistics::{StatisticsDirectoryParser, StatsOutput};
 use search::BattleSearcher;
@@ -110,8 +112,11 @@ struct Options {
 #[derive(Debug)]
 pub enum BattleToolsError {
     IOError(std::io::Error),
+    JSONParsingError(serde_json::Error),
+    RegexError(regex::Error),
     InvalidLog(String),
     PathConversion(String),
+    IncompleteAnonymization(String),
 }
 impl From<std::io::Error> for BattleToolsError {
     fn from(error: std::io::Error) -> Self {
@@ -121,6 +126,16 @@ impl From<std::io::Error> for BattleToolsError {
 impl From<String> for BattleToolsError {
     fn from(error: String) -> Self {
         BattleToolsError::InvalidLog(error)
+    }
+}
+impl From<serde_json::Error> for BattleToolsError {
+    fn from(error: serde_json::Error) -> Self {
+        BattleToolsError::JSONParsingError(error)
+    }
+}
+impl From<regex::Error> for BattleToolsError {
+    fn from(error: regex::Error) -> Self {
+        BattleToolsError::RegexError(error)
     }
 }
 
@@ -172,7 +187,9 @@ fn main() -> Result<(), BattleToolsError> {
             directories,
             output_dir,
         } => {
-            unimplemented!();
+            // TODO: Add --safe option
+            let mut anonymizer = AnonymizingDirectoryParser::new(false, output_dir);
+            anonymizer.handle_directories(directories)?;
         }
     }
 
