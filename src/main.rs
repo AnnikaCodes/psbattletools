@@ -1,12 +1,15 @@
 #![feature(iter_intersperse, test)]
 // Command-line program to manage PS battle logs.
 
+mod id;
 mod directory;
 mod statistics;
+mod search;
 mod testing;
 
 use directory::ParallelDirectoryParser;
 use statistics::{StatisticsDirectoryParser, StatsOutput};
+use search::BattleSearcher;
 
 use std::{fs, path::PathBuf};
 use structopt::StructOpt;
@@ -107,15 +110,29 @@ struct Options {
 #[derive(Debug)]
 pub enum BattleToolsError {
     IOError(std::io::Error),
+    InvalidLog(String),
 }
 impl From<std::io::Error> for BattleToolsError {
     fn from(error: std::io::Error) -> Self {
         BattleToolsError::IOError(error)
     }
 }
+impl From<String> for BattleToolsError {
+    fn from(error: String) -> Self {
+        BattleToolsError::InvalidLog(error)
+    }
+}
 
 fn main() -> Result<(), BattleToolsError> {
     let options = Options::from_args();
+
+    if let Some(exclude) = options.exclude {
+        unimplemented!();
+    }
+    if let Some(threads) = options.threads {
+        unimplemented!();
+    }
+
     match options.command {
         Subcommand::Statistics {
             directories,
@@ -147,7 +164,8 @@ fn main() -> Result<(), BattleToolsError> {
             wins_only,
             forfeits_only,
         } => {
-            unimplemented!();
+            let mut parser = BattleSearcher::new(&username, wins_only, forfeits_only);
+            parser.handle_directories(directories)?;
         }
         Subcommand::Anonymize {
             directories,
