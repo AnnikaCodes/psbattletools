@@ -46,7 +46,7 @@ where
 
         let subdirectories_mutex = Mutex::new(dirs);
         let handle_specific_dir = |p: &PathBuf| -> Result<Vec<R>, BattleToolsError> {
-            println!("Parsing {}...", p.display());
+            eprintln!("Parsing {}...", p.display());
             let result_vec = fs::read_dir(p)?
                 .collect::<Vec<_>>()
                 .par_iter()

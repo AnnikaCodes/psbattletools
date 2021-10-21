@@ -19,3 +19,4 @@ tests = { path = "./tests" }
 
 [features]
 bench_old_battlesearch = []
+bench_old_winrates = []
