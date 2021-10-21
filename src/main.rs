@@ -6,13 +6,11 @@ mod directory;
 mod statistics;
 mod search;
 mod anonymize;
-mod testing;
 
 use anonymize::AnonymizingDirectoryParser;
 use directory::ParallelDirectoryParser;
 use statistics::{StatisticsDirectoryParser, StatsOutput};
 use search::BattleSearcher;
-
 use std::{fs, path::PathBuf};
 use structopt::StructOpt;
 

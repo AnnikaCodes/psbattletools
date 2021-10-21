@@ -52,7 +52,7 @@ mod tests {
     extern crate test;
 
     use super::*;
-    use crate::testing::*;
+    use ::tests::*;
     use test::Bencher;
 
     #[bench]

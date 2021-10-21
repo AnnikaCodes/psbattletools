@@ -33,3 +33,8 @@ The `anonymize` subcommand removes personally-identifying data from battle logs,
 You must provide a list of directories containing JSON files to anonymize; **all** of the JSON battle logs in these directories will be anonymized, and directory structure will not be preserved in the output. This subcommand accepts only one argument, which must be specified: `--output [directory]` (or `-o [directory]`), which specifies the directory in which anonymized battle logs will be written.
 
 For example, to write anonymized [Gen 8] Random Battle logs from June-August 2021 to the directory `anonymized/`, you'd use the command `psbattletools anonymize -o anonymized logs/2021-06/gen8randombattle logs/2021-07/gen8randombattle logs/2021-08/gen8randombattle`.
+## Development
+I welcome contributions to `psbattletools`. There's currently no formal contribution guide, but pull requests are always welcome. If possible, make sure your code is `rustfmt`ed and has unit test(s) to detect regressions and/or test added functionality.
+
+Unit and integration tests can be run with `cargo test`, and benchmarks can be run with `cargo bench`. The following features may be enabled during benchmarks (with `cargo bench --features ...`) to run additional benchmarks:
+- `bench_old_battlesearch` runs the same benchmark as is used for the integration benchmark of `psbattletools search` on my old [`battlesearch`](https://crates.io/crates/battlesearch) program; this allows for direct performance comparisons. Don't enable this feature unless you have `battlesearch` installed.

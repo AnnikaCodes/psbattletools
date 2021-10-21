@@ -375,6 +375,7 @@ dependencies = [
  "regex",
  "serde_json",
  "structopt",
+ "tests",
 ]
 
 [[package]]
@@ -542,6 +543,13 @@ dependencies = [
  "byteorder",
  "dirs",
  "winapi",
+]
+
+[[package]]
+name = "tests"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
 ]
 
 [[package]]

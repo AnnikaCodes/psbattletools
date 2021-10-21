@@ -39,7 +39,8 @@ mod tests {
     use super::*;
     use lazy_static::lazy_static;
     use test::Bencher;
-    use crate::{testing::*, directory::ParallelDirectoryParser};
+    use crate::directory::ParallelDirectoryParser;
+    use ::tests::*;
 
     lazy_static! {
         static ref SAMPLE_JSON: String = String::from(
