@@ -82,35 +82,3 @@ fn test_search_wins_only() {
         assert!(rust_haters_output_str.split('\n').collect::<Vec<_>>().len() <= 5);
     }
 }
-
-// Benchmarks
-#[bench]
-fn bench_search_1k(b: &mut Bencher) {
-    build_test_dir(1_000).unwrap();
-    let mut path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
-    path.push("target");
-    path.push("release");
-    if !path.exists() {
-        // probably not benchmarking - `cargo test` was invoked instead
-        eprintln!("{:?} doesn't exist - ignoring benchmark", path);
-        return;
-    }
-    path.push("psbattletools");
-
-    let mut cmd = Command::new(&path);
-    cmd.arg("search").arg("AnniKa").arg(&*TEST_ROOT_DIR);
-
-    b.iter(|| cmd.output().expect("Failed to execute command"));
-}
-
-// Benchmark against the old `battlesearch` program
-#[cfg_attr(not(feature = "bench_old_battlesearch"), ignore)]
-#[bench]
-fn bench_old_battlesearch_1k(b: &mut Bencher) {
-    build_test_dir(1_000).unwrap();
-
-    let mut cmd = Command::new("battlesearch");
-    cmd.arg("AnniKa").arg(&*TEST_ROOT_DIR);
-
-    b.iter(|| cmd.output().expect("Failed to execute command"));
-}
