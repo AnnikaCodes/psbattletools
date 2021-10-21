@@ -200,7 +200,7 @@ impl super::StatsOutput for Stats {
 }
 
 #[cfg(test)]
-mod tests {
+mod unit_tests {
     extern crate test;
     use super::{super::StatsOutput, Stats};
     use lazy_static::lazy_static;

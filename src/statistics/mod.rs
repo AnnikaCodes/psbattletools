@@ -25,7 +25,11 @@ impl StatisticsDirectoryParser {
 }
 
 impl LogParser<Vec<GameResult>> for StatisticsDirectoryParser {
-    fn handle_log_file(&self, raw_json: String, _: &std::path::Path) -> Result<Vec<GameResult>, BattleToolsError> {
+    fn handle_log_file(
+        &self,
+        raw_json: String,
+        _: &std::path::Path,
+    ) -> Result<Vec<GameResult>, BattleToolsError> {
         // TODO: potentially optimize by not comparing min_elo if unnecessary
         Stats::process_json(self.min_elo, &raw_json)
     }
@@ -48,12 +52,12 @@ impl StatsOutput for StatisticsDirectoryParser {
 }
 
 #[cfg(test)]
-mod tests {
+mod unit_tests {
     extern crate test;
 
     use super::*;
-    use ::tests::*;
     use test::Bencher;
+    use tests::*;
 
     #[bench]
     fn bench_handle_directory_1k(b: &mut Bencher) {

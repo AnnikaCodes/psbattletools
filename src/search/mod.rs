@@ -3,8 +3,8 @@
 use crate::directory::LogParser;
 
 // Adapted from https://github.com/AnnikaCodes/battlesearch/blob/main/src/search.rs
+use crate::{id::to_id, BattleToolsError};
 use std::path::Path;
-use crate::{BattleToolsError, id::to_id};
 
 pub struct BattleSearcher {
     pub user_id: String,
@@ -19,13 +19,8 @@ fn bytes_to_id(bytes: &Option<&[u8]>) -> Option<String> {
     }
 }
 
-
 impl BattleSearcher {
-    pub fn new(
-        username: &str,
-        wins_only: bool,
-        forfeits_only: bool,
-    ) -> Self {
+    pub fn new(username: &str, wins_only: bool, forfeits_only: bool) -> Self {
         Self {
             user_id: to_id(username),
             wins_only,
@@ -41,10 +36,16 @@ impl LogParser<()> for BattleSearcher {
         let date = match path.parent() {
             Some(p) => p
                 .file_name()
-                .ok_or(BattleToolsError::PathConversion(format!("Can't get parent file name for {:?}", path)))?
+                .ok_or(BattleToolsError::PathConversion(format!(
+                    "Can't get parent file name for {:?}",
+                    path
+                )))?
                 .to_str()
-                .ok_or(BattleToolsError::PathConversion(format!("Can't stringify parent for {:?}", path)))?,
-            None => "unknown date"
+                .ok_or(BattleToolsError::PathConversion(format!(
+                    "Can't stringify parent for {:?}",
+                    path
+                )))?,
+            None => "unknown date",
         };
 
         let mut json_parser = pikkr_annika::Pikkr::new(
@@ -109,10 +110,17 @@ impl LogParser<()> for BattleSearcher {
             None => String::from("there was no winner"),
         };
 
-        let room = path.file_name()
-            .ok_or(BattleToolsError::PathConversion(format!("Can't get file name of {:?}", path)))?
+        let room = path
+            .file_name()
+            .ok_or(BattleToolsError::PathConversion(format!(
+                "Can't get file name of {:?}",
+                path
+            )))?
             .to_str()
-            .ok_or(BattleToolsError::PathConversion(format!("Can't convert file name to &str for {:?}", path)))?
+            .ok_or(BattleToolsError::PathConversion(format!(
+                "Can't convert file name to &str for {:?}",
+                path
+            )))?
             .replace(".log.json", "");
 
         println!(
@@ -128,15 +136,14 @@ impl LogParser<()> for BattleSearcher {
     }
 }
 
-
 #[cfg(test)]
-mod tests {
+mod unit_tests {
     extern crate test;
     use super::*;
+    use crate::directory::ParallelDirectoryParser;
     use lazy_static::lazy_static;
     use test::Bencher;
-    use crate::directory::ParallelDirectoryParser;
-    use ::tests::*;
+    use tests::*;
 
     lazy_static! {
         static ref SAMPLE_JSON: String = String::from(
@@ -148,25 +155,41 @@ mod tests {
     #[bench]
     pub fn bench_parse_wins_only(b: &mut Bencher) {
         let searcher = BattleSearcher::new("Rusthaters", true, false);
-        b.iter(|| searcher.handle_log_file(SAMPLE_JSON.clone(), &PATH).unwrap());
+        b.iter(|| {
+            searcher
+                .handle_log_file(SAMPLE_JSON.clone(), &PATH)
+                .unwrap()
+        });
     }
 
     #[bench]
     pub fn bench_parse_forfeits_only(b: &mut Bencher) {
         let searcher = BattleSearcher::new("Rusthaters", false, true);
-        b.iter(|| searcher.handle_log_file(SAMPLE_JSON.clone(), &PATH).unwrap());
+        b.iter(|| {
+            searcher
+                .handle_log_file(SAMPLE_JSON.clone(), &PATH)
+                .unwrap()
+        });
     }
 
     #[bench]
     pub fn bench_parse_forfeit_wins_only(b: &mut Bencher) {
         let searcher = BattleSearcher::new("Rusthaters", true, true);
-        b.iter(|| searcher.handle_log_file(SAMPLE_JSON.clone(), &PATH).unwrap());
+        b.iter(|| {
+            searcher
+                .handle_log_file(SAMPLE_JSON.clone(), &PATH)
+                .unwrap()
+        });
     }
 
     #[bench]
     pub fn bench_parse(b: &mut Bencher) {
         let searcher = BattleSearcher::new("Rusthaters", false, false);
-        b.iter(|| searcher.handle_log_file(SAMPLE_JSON.clone(), &PATH).unwrap());
+        b.iter(|| {
+            searcher
+                .handle_log_file(SAMPLE_JSON.clone(), &PATH)
+                .unwrap()
+        });
     }
 
     #[bench]

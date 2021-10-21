@@ -1,16 +1,16 @@
 #![feature(iter_intersperse, test)]
 // Command-line program to manage PS battle logs.
 
-mod id;
-mod directory;
-mod statistics;
-mod search;
 mod anonymize;
+mod directory;
+mod id;
+mod search;
+mod statistics;
 
 use anonymize::AnonymizingDirectoryParser;
 use directory::ParallelDirectoryParser;
-use statistics::{StatisticsDirectoryParser, StatsOutput};
 use search::BattleSearcher;
+use statistics::{StatisticsDirectoryParser, StatsOutput};
 use std::{fs, path::PathBuf};
 use structopt::StructOpt;
 
@@ -140,10 +140,10 @@ impl From<regex::Error> for BattleToolsError {
 fn main() -> Result<(), BattleToolsError> {
     let options = Options::from_args();
 
-    if let Some(exclude) = options.exclude {
+    if let Some(_exclude) = options.exclude {
         unimplemented!();
     }
-    if let Some(threads) = options.threads {
+    if let Some(_threads) = options.threads {
         unimplemented!();
     }
 

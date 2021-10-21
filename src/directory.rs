@@ -4,7 +4,7 @@ use rayon::prelude::*;
 use std::{
     fs,
     marker::{Send, Sync},
-    path::{PathBuf, Path},
+    path::{Path, PathBuf},
     sync::Mutex,
 };
 

@@ -1,16 +1,15 @@
 // From https://github.com/AnnikaCodes/anonbattle/blob/main/src/anonymizer.rs
 
-
-use std::sync::Mutex;
-use std::{collections::HashMap, sync::RwLock};
 use std::str::FromStr;
+use std::sync::Mutex;
+use std::{collections::HashMap};
 
-use regex::Regex;
 use lazy_static::*;
+use regex::Regex;
 
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
-use crate::{BattleToolsError, id::to_id};
+use crate::{id::to_id, BattleToolsError};
 
 lazy_static! {
     static ref INPUTLOG_ANONYMIZER_REGEX: Regex = Regex::new(r#"name":".*","#).unwrap();
@@ -60,15 +59,18 @@ impl Anonymizer {
         }
     }
 
-
     /// Anonymizes a log.
     ///
     /// Returns a tuple: (json, battle_number)
     pub fn anonymize(&self, raw: &str) -> Result<(String, u32), BattleToolsError> {
         let json: serde_json::Map<String, Value> = serde_json::from_str(raw)?;
 
-        let p1 = json["p1"].as_str().ok_or(format!("Bad JSON for p1 {}", json["p1"]))?;
-        let p2 = json["p2"].as_str().ok_or(format!("Bad JSON for p2 {}", json["p2"]))?;
+        let p1 = json["p1"]
+            .as_str()
+            .ok_or(format!("Bad JSON for p1 {}", json["p1"]))?;
+        let p2 = json["p2"]
+            .as_str()
+            .ok_or(format!("Bad JSON for p2 {}", json["p2"]))?;
         let p1_id = to_id(p1);
         let p2_id = to_id(p2);
 
@@ -79,7 +81,11 @@ impl Anonymizer {
 
         let (p1_anon, p2_anon, winner_anon) = {
             let mut tracker = self.state.lock().unwrap();
-            (tracker.anonymize_player(p1.to_string()), tracker.anonymize_player(p2.to_string()), tracker.anonymize_player(winner))
+            (
+                tracker.anonymize_player(p1.to_string()),
+                tracker.anonymize_player(p2.to_string()),
+                tracker.anonymize_player(winner),
+            )
         };
 
         let mut json_result = json.clone();
@@ -107,77 +113,109 @@ impl Anonymizer {
             .as_array()
             .ok_or(format!("Bad JSON for inputlog {}", json["inputLog"]))?
             .iter();
-        json_result["inputLog"] = serde_json::json!(il.filter_map(|inputlog_part| {
-            let inputlog_part_string: &str = inputlog_part
-                .as_str()
-                .unwrap();
-            if inputlog_part_string.starts_with(">player p1") {
-                let res = INPUTLOG_ANONYMIZER_REGEX.replace_all(inputlog_part_string, |_: &regex::Captures| {
-                    format!("\"name\":\"{}\",", p1_anon)
-                });
-                return Some(json!(res));
-            } else if inputlog_part_string.starts_with(">player p2") {
-                let res = INPUTLOG_ANONYMIZER_REGEX.replace_all(inputlog_part_string, |_: &regex::Captures| {
-                    format!("\"name\":\"{}\",", p2_anon)
-                });
-                return Some(json!(res));
-            } else if inputlog_part_string.starts_with(">chat ") {
-                return None;
-            }
+        json_result["inputLog"] = serde_json::json!(il
+            .filter_map(|inputlog_part| {
+                let inputlog_part_string: &str = inputlog_part.as_str().unwrap();
+                if inputlog_part_string.starts_with(">player p1") {
+                    let res = INPUTLOG_ANONYMIZER_REGEX
+                        .replace_all(inputlog_part_string, |_: &regex::Captures| {
+                            format!("\"name\":\"{}\",", p1_anon)
+                        });
+                    return Some(json!(res));
+                } else if inputlog_part_string.starts_with(">player p2") {
+                    let res = INPUTLOG_ANONYMIZER_REGEX
+                        .replace_all(inputlog_part_string, |_: &regex::Captures| {
+                            format!("\"name\":\"{}\",", p2_anon)
+                        });
+                    return Some(json!(res));
+                } else if inputlog_part_string.starts_with(">chat ") {
+                    return None;
+                }
 
-            Some(inputlog_part.clone())
-        }).collect::<Vec<serde_json::Value>>());
+                Some(inputlog_part.clone())
+            })
+            .collect::<Vec<serde_json::Value>>());
 
         let log = json["log"]
             .as_array()
             .ok_or(format!("Bad JSON for log {}", json["log"]))?
             .iter();
 
-        let p1regex = Regex::from_str(&["\\|p1[ab]?: (", &regex::escape(p1), "|", &regex::escape(&p1_id), ")"].join(""))?;
-        let p2regex = Regex::from_str(&["\\|p2[ab]?: (", &regex::escape(p2), "|", &regex::escape(&p2_id), ")"].join(""))?;
+        let p1regex = Regex::from_str(
+            &[
+                "\\|p1[ab]?: (",
+                &regex::escape(p1),
+                "|",
+                &regex::escape(&p1_id),
+                ")",
+            ]
+            .join(""),
+        )?;
+        let p2regex = Regex::from_str(
+            &[
+                "\\|p2[ab]?: (",
+                &regex::escape(p2),
+                "|",
+                &regex::escape(&p2_id),
+                ")",
+            ]
+            .join(""),
+        )?;
 
-        json_result["log"] = serde_json::json!(log.filter_map(|log_part| {
-            let log_part_string: &str = &match log_part.as_str() {
-                Some(a) => a.to_owned(),
-                None => format!("Bad JSON for logpart {:#?}", log_part)
-            };
+        json_result["log"] = serde_json::json!(log
+            .filter_map(|log_part| {
+                let log_part_string: &str = &match log_part.as_str() {
+                    Some(a) => a.to_owned(),
+                    None => format!("Bad JSON for logpart {:#?}", log_part),
+                };
 
-            // Remove chat and timers (privacy threat)
-            if log_part_string.starts_with("|c|") || log_part_string.starts_with("|c:|") || log_part_string.starts_with("|inactive|") {
-                return None;
-            }
+                // Remove chat and timers (privacy threat)
+                if log_part_string.starts_with("|c|")
+                    || log_part_string.starts_with("|c:|")
+                    || log_part_string.starts_with("|inactive|")
+                {
+                    return None;
+                }
 
-            if log_part_string.starts_with("|j|") ||
-                log_part_string.starts_with("|J|") ||
+                if log_part_string.starts_with("|j|")
+                    || log_part_string.starts_with("|J|")
+                    || log_part_string.starts_with("|l|")
+                    || log_part_string.starts_with("|L|")
+                    || log_part_string.starts_with("|N|")
+                    || log_part_string.starts_with("|n|")
+                    || log_part_string.starts_with("|win|")
+                    || log_part_string.starts_with("|tie|")
+                    || log_part_string.starts_with("|-message|")
+                    || log_part_string.starts_with("|raw|")
+                    || log_part_string.starts_with("|player|")
+                {
+                    return Some(json!(log_part_string
+                        .replace(p1, &p1_anon)
+                        .replace(p2, &p2_anon)
+                        .replace(&p1_id, &p1_anon)
+                        .replace(&p2_id, &p2_anon)));
+                }
 
-                log_part_string.starts_with("|l|") ||
-                log_part_string.starts_with("|L|") ||
-
-                log_part_string.starts_with("|N|") ||
-                log_part_string.starts_with("|n|") ||
-
-                log_part_string.starts_with("|win|") ||
-                log_part_string.starts_with("|tie|") ||
-                log_part_string.starts_with("|-message|") ||
-                log_part_string.starts_with("|raw|") ||
-                log_part_string.starts_with("|player|")
-            {
-                return Some(json!(log_part_string
-                    .replace(p1, &p1_anon)
-                    .replace(p2, &p2_anon)
-                    .replace(&p1_id, &p1_anon)
-                    .replace(&p2_id, &p2_anon)
-                ));
-            }
-
-            return Some(json!(p2regex.replace_all(p1regex.replace_all(log_part_string, &p1_anon as &str).as_ref(), &p2_anon as &str)));
-        }).collect::<Vec<serde_json::Value>>());
+                return Some(json!(p2regex.replace_all(
+                    p1regex
+                        .replace_all(log_part_string, &p1_anon as &str)
+                        .as_ref(),
+                    &p2_anon as &str
+                )));
+            })
+            .collect::<Vec<serde_json::Value>>());
 
         let result = serde_json::to_string(&json_result)?;
 
         if self.is_safe {
-            if result.contains(p1) || result.contains(&p1_id) || result.contains(p2) || result.contains(&p2_id) {
-                return Err(BattleToolsError::IncompleteAnonymization(json["roomid"].to_string()));
+            if result.contains(p1)
+                || result.contains(&p1_id)
+                || result.contains(p2)
+                || result.contains(&p2_id)
+            {
+                return Err(BattleToolsError::IncompleteAnonymization(
+                    json["roomid"].to_string(),
+                ));
             }
         }
 
@@ -191,7 +229,7 @@ impl Anonymizer {
 }
 
 #[cfg(test)]
-mod tests {
+mod unit_tests {
     extern crate test;
     use super::*;
     use lazy_static::lazy_static;
@@ -244,12 +282,22 @@ mod tests {
         assert_ne!(json, *SAMPLE_JSON);
 
         for term in ["00:00:01", "Annika", "annika", "Rust Haters", "rusthaters"] {
-            assert!(!json.contains(term), "Identifying information in anonymized JSON ('{}' in '{}')", term, json);
+            assert!(
+                !json.contains(term),
+                "Identifying information in anonymized JSON ('{}' in '{}')",
+                term,
+                json
+            );
         }
 
         for property in ["p1rating", "p2rating", "roomid"] {
             let value = gjson::get(&json, property);
-            assert!(!value.exists() || value.kind() == gjson::Kind::Null, "Anonymized JSON includes potentially-identifying property '{}' (full JSON: '{}')", property, json);
+            assert!(
+                !value.exists() || value.kind() == gjson::Kind::Null,
+                "Anonymized JSON includes potentially-identifying property '{}' (full JSON: '{}')",
+                property,
+                json
+            );
         }
     }
 }

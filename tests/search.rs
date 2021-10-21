@@ -1,6 +1,6 @@
 #![feature(test)]
-use std::process::Command;
 use std::path::PathBuf;
+use std::process::Command;
 
 use tests::*;
 
@@ -95,7 +95,6 @@ fn bench_search_1k(b: &mut Bencher) {
 
     b.iter(|| cmd.output().expect("Failed to execute command"));
 }
-
 
 // Benchmark against the old `battlesearch` program
 #[cfg_attr(not(feature = "bench_old_battlesearch"), ignore)]
