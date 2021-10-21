@@ -95,10 +95,7 @@ where
 
         // get_next_dir is a closure so that the mutex is unlocked before handle_specific_dir is called.
         // Otherwise, the Rayon filter_map threads block infinitely when trying to lock the mutex (to add a subdirectory)
-        let get_next_dir = || match subdirectories_mutex.lock().unwrap().pop() {
-            Some(p) => Some(p.clone()),
-            None => None,
-        };
+        let get_next_dir = || subdirectories_mutex.lock().unwrap().pop();
         while let Some(dir) = get_next_dir() {
             if let Ok(r) = handle_specific_dir(&dir) {
                 results.extend(r);

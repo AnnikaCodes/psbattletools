@@ -67,10 +67,10 @@ impl Stats {
         }
     }
 
-    pub fn process_json(min_elo: u64, json: &String) -> Result<Vec<GameResult>, BattleToolsError> {
+    pub fn process_json(min_elo: u64, json: &str) -> Result<Vec<GameResult>, BattleToolsError> {
         // ELO check
         for elo_property in ["p1rating.elo", "p2rating.elo"].iter() {
-            if (gjson::get(&json, elo_property).f32() as u64) < min_elo {
+            if (gjson::get(json, elo_property).f32() as u64) < min_elo {
                 // ignore
                 return Ok(vec![]);
             }
@@ -83,9 +83,9 @@ impl Stats {
             [("p1team.#.species", "p1"), ("p2team.#.species", "p2")].iter()
         {
             // json[16] = the winner
-            let won = gjson::get(&json, player_property) == gjson::get(&json, "winner");
+            let won = gjson::get(json, player_property) == gjson::get(json, "winner");
 
-            let species_list = gjson::get(&json, species_list_property);
+            let species_list = gjson::get(json, species_list_property);
             for species in species_list.array() {
                 results.push(GameResult {
                     species: Stats::normalize_species(species.str()),

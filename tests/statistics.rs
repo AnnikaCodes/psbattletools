@@ -6,7 +6,6 @@ use lazy_static::lazy_static;
 use tests::*;
 
 extern crate test;
-use test::*;
 
 lazy_static! {
     static ref DESIRED_TABLE_OUTPUT: &'static str = "+------+-----------------+------------+---------+-------+------+
@@ -134,7 +133,7 @@ fn test_min_elo() {
             .expect("Failed to execute command");
 
         let no_output_str = std::str::from_utf8(&no_output.stdout).unwrap();
-        assert!(!no_output_str.contains("%"));
+        assert!(!no_output_str.contains('%'));
         assert!(!no_output_str.contains("Rotom"));
     }
 }

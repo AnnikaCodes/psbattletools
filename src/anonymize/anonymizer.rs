@@ -207,16 +207,13 @@ impl Anonymizer {
 
         let result = serde_json::to_string(&json_result)?;
 
-        if self.is_safe {
-            if result.contains(p1)
+        if self.is_safe && (result.contains(p1)
                 || result.contains(&p1_id)
                 || result.contains(p2)
-                || result.contains(&p2_id)
-            {
-                return Err(BattleToolsError::IncompleteAnonymization(
-                    json["roomid"].to_string(),
-                ));
-            }
+                || result.contains(&p2_id)) {
+            return Err(BattleToolsError::IncompleteAnonymization(
+                json["roomid"].to_string(),
+            ));
         }
 
         let battle_number = {
@@ -270,8 +267,8 @@ mod unit_tests {
         assert_ne!(anon_p2, player2);
 
         // Consistent
-        assert_eq!(state.anonymize_player(player1.clone()), anon_p1);
-        assert_eq!(state.anonymize_player(player2.clone()), anon_p2);
+        assert_eq!(state.anonymize_player(player1), anon_p1);
+        assert_eq!(state.anonymize_player(player2), anon_p2);
     }
 
     #[test]

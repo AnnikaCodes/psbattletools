@@ -5,7 +5,6 @@ use std::process::Command;
 use tests::*;
 
 extern crate test;
-use test::*;
 
 #[test]
 fn test_search() {
@@ -22,7 +21,7 @@ fn test_search() {
 
     let output_str = std::str::from_utf8(&output.stdout).unwrap();
     assert!(output_str.contains("annika vs. rusthaters (annika won normally)"));
-    assert!(output_str.split('\n').collect::<Vec<_>>().len() >= 1000);
+    assert!(output_str.split('\n').count() >= 1000);
 }
 
 #[test]
@@ -43,7 +42,7 @@ fn test_search_forfeit() {
         let output_str = std::str::from_utf8(&output.stdout).unwrap();
         assert!(!output_str.contains("annika"));
         assert!(!output_str.contains("Annika"));
-        assert!(output_str.split('\n').collect::<Vec<_>>().len() <= 5); // 5 lines permitted for "parsing..." etc
+        assert!(output_str.split('\n').count() <= 5); // 5 lines permitted for "parsing..." etc
     }
 }
 
@@ -65,7 +64,7 @@ fn test_search_wins_only() {
 
         let annika_output_str = std::str::from_utf8(&annika_output.stdout).unwrap();
         assert!(annika_output_str.contains("annika vs. rusthaters (annika won normally)"));
-        assert!(annika_output_str.split('\n').collect::<Vec<_>>().len() >= 1000);
+        assert!(annika_output_str.split('\n').count() >= 1000);
 
         // Rust Haters always loses in the test logs, so when searching for _their_ wins, we should get 0 results
         let rust_haters_output = Command::new(&path)
@@ -79,6 +78,6 @@ fn test_search_wins_only() {
         let rust_haters_output_str = std::str::from_utf8(&rust_haters_output.stdout).unwrap();
         assert!(!rust_haters_output_str.contains("annika"));
         assert!(!rust_haters_output_str.contains("Annika"));
-        assert!(rust_haters_output_str.split('\n').collect::<Vec<_>>().len() <= 5);
+        assert!(rust_haters_output_str.split('\n').count() <= 5);
     }
 }
