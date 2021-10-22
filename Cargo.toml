@@ -17,6 +17,9 @@ serde_json = "1.0.68"
 structopt = "0.3.23"
 tests = { path = "./tests" }
 
+[dev-dependencies]
+cargo-husky = { version = "1", default-features = false, features = ["prepush-hook", "run-cargo-clippy", "run-cargo-fmt"] }
+
 [features]
 bench_old_battlesearch = []
 bench_old_winrates = []
