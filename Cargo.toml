@@ -19,6 +19,7 @@ tests = { path = "./tests" }
 
 [dev-dependencies]
 cargo-husky = { version = "1", default-features = false, features = ["prepush-hook", "run-cargo-clippy", "run-cargo-fmt"] }
+serial_test = "*"
 
 [features]
 bench_old_battlesearch = []

@@ -2,35 +2,13 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-use lazy_static::lazy_static;
+use serial_test::serial;
 use tests::*;
 
 extern crate test;
 
-///
-/*
-       assert_ne!(json, *SAMPLE_JSON);
-
-       for term in ["00:00:01", "Annika", "annika", "Rust Haters", "rusthaters"] {
-           assert!(
-               !json.contains(term),
-               "Identifying information in anonymized JSON ('{}' in '{}')",
-               term,
-               json
-           );
-       }
-
-       for property in ["p1rating", "p2rating", "roomid"] {
-           let value = gjson::get(&json, property);
-           assert!(
-               !value.exists() || value.kind() == gjson::Kind::Null,
-               "Anonymized JSON includes potentially-identifying property '{}' (full JSON: '{}')",
-               property,
-               json
-           );
-       }
-*/
 #[test]
+#[serial]
 fn test_no_terms_and_identicality() {
     build_test_dir(1_000).unwrap();
     let mut path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
