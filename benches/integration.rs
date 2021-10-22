@@ -22,8 +22,7 @@ fn bench_stats_1k(b: &mut Bencher) {
     path.push("psbattletools");
 
     let mut cmd = Command::new(&path);
-    cmd
-        .arg("statistics")
+    cmd.arg("statistics")
         .arg(path)
         .arg(&*TEST_ROOT_DIR)
         .arg("--csv")
@@ -39,9 +38,10 @@ fn bench_old_winrates_1k(b: &mut Bencher) {
     build_test_dir(1_000).unwrap();
 
     let mut cmd = Command::new("randbats-winrates");
-    cmd
-        .arg("--input").arg(&*TEST_ROOT_DIR)
-        .arg("--minimum-elo").arg("0")
+    cmd.arg("--input")
+        .arg(&*TEST_ROOT_DIR)
+        .arg("--minimum-elo")
+        .arg("0")
         .arg("--csv-output")
         .arg("test-scratch/old.csv");
 

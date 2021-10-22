@@ -1,8 +1,8 @@
 // From https://github.com/AnnikaCodes/anonbattle/blob/main/src/anonymizer.rs
 
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Mutex;
-use std::{collections::HashMap};
 
 use lazy_static::*;
 use regex::Regex;
@@ -207,10 +207,12 @@ impl Anonymizer {
 
         let result = serde_json::to_string(&json_result)?;
 
-        if self.is_safe && (result.contains(p1)
+        if self.is_safe
+            && (result.contains(p1)
                 || result.contains(&p1_id)
                 || result.contains(p2)
-                || result.contains(&p2_id)) {
+                || result.contains(&p2_id))
+        {
             return Err(BattleToolsError::IncompleteAnonymization(
                 json["roomid"].to_string(),
             ));

@@ -33,23 +33,29 @@ impl LogParser<()> for BattleSearcher {
         let date = match path.parent() {
             Some(p) => p
                 .file_name()
-                .ok_or_else(|| BattleToolsError::PathConversion(format!(
-                    "Can't get parent file name for {:?}",
-                    path
-                )))?
+                .ok_or_else(|| {
+                    BattleToolsError::PathConversion(format!(
+                        "Can't get parent file name for {:?}",
+                        path
+                    ))
+                })?
                 .to_str()
-                .ok_or_else(|| BattleToolsError::PathConversion(format!(
-                    "Can't stringify parent for {:?}",
-                    path
-                )))?,
+                .ok_or_else(|| {
+                    BattleToolsError::PathConversion(format!(
+                        "Can't stringify parent for {:?}",
+                        path
+                    ))
+                })?,
             None => "unknown date",
         };
 
         let mut json_parser = pikkr_annika::Pikkr::new(
-            &["$.p1".as_bytes(),      // p1 name - idx 0
-                "$.p2".as_bytes(),      // p2 name - idx 1
-                "$.winner".as_bytes(),  // winner - idx 2
-                "$.endType".as_bytes()],
+            &[
+                "$.p1".as_bytes(),     // p1 name - idx 0
+                "$.p2".as_bytes(),     // p2 name - idx 1
+                "$.winner".as_bytes(), // winner - idx 2
+                "$.endType".as_bytes(),
+            ],
             2,
         )
         .unwrap();
@@ -107,15 +113,16 @@ impl LogParser<()> for BattleSearcher {
 
         let room = path
             .file_name()
-            .ok_or_else(|| BattleToolsError::PathConversion(format!(
-                "Can't get file name of {:?}",
-                path
-            )))?
+            .ok_or_else(|| {
+                BattleToolsError::PathConversion(format!("Can't get file name of {:?}", path))
+            })?
             .to_str()
-            .ok_or_else (|| BattleToolsError::PathConversion(format!(
-                "Can't convert file name to &str for {:?}",
-                path
-            )))?
+            .ok_or_else(|| {
+                BattleToolsError::PathConversion(format!(
+                    "Can't convert file name to &str for {:?}",
+                    path
+                ))
+            })?
             .replace(".log.json", "");
 
         println!(

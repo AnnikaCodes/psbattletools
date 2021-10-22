@@ -8,7 +8,8 @@ use tests::*;
 extern crate test;
 
 lazy_static! {
-    static ref DESIRED_TABLE_OUTPUT: &'static str = "+------+-----------------+------------+---------+-------+------+
+    static ref DESIRED_TABLE_OUTPUT: &'static str =
+        "+------+-----------------+------------+---------+-------+------+
 | Rank | Pokemon         | Deviations | Winrate | Games | Wins |
 +------+-----------------+------------+---------+-------+------+
 | 1    | Rotom-Fan       | 31.622776  | 100%    | 1000  | 1000 |
@@ -65,7 +66,10 @@ fn test_table() {
                 .arg(&*TEST_ROOT_DIR)
                 .output()
                 .expect("Failed to execute command");
-            assert_eq!(std::fs::read_to_string(out_file).expect("Couldn't read output file"), *DESIRED_TABLE_OUTPUT);
+            assert_eq!(
+                std::fs::read_to_string(out_file).expect("Couldn't read output file"),
+                *DESIRED_TABLE_OUTPUT
+            );
         }
     }
 }
@@ -85,7 +89,10 @@ fn test_csv() {
             .output()
             .expect("Failed to execute command");
 
-        assert_eq!(std::fs::read_to_string(out_file).expect("Couldn't read output file"), *DESIRED_CSV_OUTPUT);
+        assert_eq!(
+            std::fs::read_to_string(out_file).expect("Couldn't read output file"),
+            *DESIRED_CSV_OUTPUT
+        );
     }
 }
 
@@ -102,7 +109,10 @@ fn test_default_output() {
             .expect("Failed to execute command");
 
         let output_str = std::str::from_utf8(&output.stdout).unwrap();
-        assert_eq!(output_str.to_string().strip_suffix('\n').unwrap(), *DESIRED_TABLE_OUTPUT);
+        assert_eq!(
+            output_str.to_string().strip_suffix('\n').unwrap(),
+            *DESIRED_TABLE_OUTPUT
+        );
     }
 }
 
@@ -122,7 +132,10 @@ fn test_min_elo() {
             .expect("Failed to execute command");
 
         let normal_output_str = std::str::from_utf8(&normal_output.stdout).unwrap();
-        assert_eq!(normal_output_str.to_string().strip_suffix('\n').unwrap(), *DESIRED_TABLE_OUTPUT);
+        assert_eq!(
+            normal_output_str.to_string().strip_suffix('\n').unwrap(),
+            *DESIRED_TABLE_OUTPUT
+        );
 
         let no_output = Command::new(&path)
             .arg("statistics")
@@ -155,7 +168,10 @@ fn test_exclusions() {
         .expect("Failed to execute command");
 
     let normal_output_str = std::str::from_utf8(&normal_output.stdout).unwrap();
-    assert_eq!(normal_output_str.to_string().strip_suffix('\n').unwrap(), *DESIRED_TABLE_OUTPUT);
+    assert_eq!(
+        normal_output_str.to_string().strip_suffix('\n').unwrap(),
+        *DESIRED_TABLE_OUTPUT
+    );
 
     // ...and less output when excluding many files
     let reduced_output = Command::new(&path)
