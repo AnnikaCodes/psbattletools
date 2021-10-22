@@ -23,3 +23,4 @@ cargo-husky = { version = "1", default-features = false, features = ["prepush-ho
 [features]
 bench_old_battlesearch = []
 bench_old_winrates = []
+bench_old_anonbattle = []

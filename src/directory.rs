@@ -89,14 +89,14 @@ where
                         let raw_json = match fs::read_to_string(entry.path()) {
                             Ok(s) => s,
                             Err(e) => {
-                                eprintln!("Error reading file '{:?}': {:?}", path, e);
+                                eprintln!("Error reading file {:?}: {:?}", path, e);
                                 return None;
                             }
                         };
                         match self.handle_log_file(raw_json, &path) {
                             Ok(res) => Some(res),
                             Err(e) => {
-                                eprintln!("Error parsing file '{:?}': {:?}", path, e);
+                                eprintln!("Error parsing file {:?}: {:?}", path, e);
                                 None
                             }
                         }
