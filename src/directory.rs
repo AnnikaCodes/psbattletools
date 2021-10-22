@@ -26,7 +26,8 @@ pub trait LogParser<R> {
 
 /// Iterates over directories and executes code on each log file in parallel.
 pub trait ParallelDirectoryParser<R> {
-    fn handle_directories(&mut self, dirs: Vec<PathBuf>) -> Result<(), BattleToolsError>;
+    /// `exclusion` will exclude any directory or file that matches the exclusion
+    fn handle_directories(&mut self, dirs: Vec<PathBuf>, exclusion: Option<String>) -> Result<(), BattleToolsError>;
 }
 
 impl<T, R> ParallelDirectoryParser<R> for T
@@ -34,7 +35,7 @@ where
     T: LogParser<R> + Sync + Send,
     R: Send,
 {
-    fn handle_directories(&mut self, dirs: Vec<PathBuf>) -> Result<(), BattleToolsError> {
+    fn handle_directories(&mut self, dirs: Vec<PathBuf>, exclusion: Option<String>) -> Result<(), BattleToolsError> {
         // We don't know if we'll get a directory with lots of subdirectories or one with lots of JSON files,
         // so we always use parallel iteration.
 
@@ -52,6 +53,12 @@ where
                 .par_iter()
                 .filter_map(|file| {
                     if let Ok(entry) = file.as_ref() {
+                        if let Some(exclude) = &exclusion {
+                            if entry.file_name().to_string_lossy().contains(exclude) {
+                                return None;
+                            }
+                        }
+
                         if entry.file_type().ok()?.is_dir() {
                             // We found a subdirectory! Add it to the list of directories to process,
                             // then return None (there's no parsed data for a subdirectory!)

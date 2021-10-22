@@ -62,7 +62,7 @@ mod unit_tests {
         let mut searcher = AnonymizingDirectoryParser::new(false, OUTPUT_PATH.clone());
         b.iter(|| {
             searcher
-                .handle_directories(vec![TEST_ROOT_DIR.clone()])
+                .handle_directories(vec![TEST_ROOT_DIR.clone()], None)
                 .unwrap()
         });
     }

@@ -152,7 +152,6 @@ fn test_min_elo() {
 }
 
 #[test]
-#[ignore] // TOOD: implement exclusions
 fn test_exclusions() {
     build_test_dir(1_000).unwrap();
     let mut path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
@@ -160,9 +159,9 @@ fn test_exclusions() {
 
     // Should provide normal output with an irrelevant exclusion...
     let normal_output = Command::new(&path)
-        .arg("statistics")
         .arg("--exclude")
         .arg("something that isn't in filenames")
+        .arg("statistics")
         .arg(&*TEST_ROOT_DIR)
         .output()
         .expect("Failed to execute command");
@@ -175,14 +174,13 @@ fn test_exclusions() {
 
     // ...and less output when excluding many files
     let reduced_output = Command::new(&path)
-        .arg("statistics")
         .arg("--exclude")
         .arg("6")
-        .arg("1131")
+        .arg("statistics")
         .arg(&*TEST_ROOT_DIR)
         .output()
         .expect("Failed to execute command");
 
     let reduced_output_str = std::str::from_utf8(&reduced_output.stdout).unwrap();
-    assert!(reduced_output_str.len() < normal_output_str.len() / 2);
+    assert!(!reduced_output_str.contains("1000")); // less than 1000 battles
 }

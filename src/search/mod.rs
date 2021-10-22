@@ -201,7 +201,7 @@ mod unit_tests {
         let mut searcher = BattleSearcher::new("Rusthaters", false, false);
         b.iter(|| {
             searcher
-                .handle_directories(vec![TEST_ROOT_DIR.clone()])
+                .handle_directories(vec![TEST_ROOT_DIR.clone()], None)
                 .unwrap()
         });
     }

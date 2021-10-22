@@ -66,7 +66,7 @@ mod unit_tests {
         let mut parser = StatisticsDirectoryParser::new(None);
         b.iter(|| {
             parser
-                .handle_directories(vec![TEST_ROOT_DIR.clone()])
+                .handle_directories(vec![TEST_ROOT_DIR.clone()], None)
                 .unwrap()
         });
     }
@@ -76,7 +76,7 @@ mod unit_tests {
         build_test_dir(1_000).unwrap();
         let mut parser = StatisticsDirectoryParser::new(None);
         parser
-            .handle_directories(vec![TEST_ROOT_DIR.to_owned()])
+            .handle_directories(vec![TEST_ROOT_DIR.to_owned()], None)
             .unwrap();
         let mut stats = parser.stats;
 

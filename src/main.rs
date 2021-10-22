@@ -90,7 +90,8 @@ enum Subcommand {
     about = "Provides various tools for Pokémon Showdown battle logs"
 )]
 struct Options {
-    // TODO: implement
+    #[structopt(subcommand)]
+    command: Subcommand,
     #[structopt(
         long = "exclude",
         help = "Filenames and directories including this string will be ignored"
@@ -103,8 +104,6 @@ struct Options {
         help = "The maximum number of threads to use for concurrent processing"
     )]
     threads: Option<usize>,
-    #[structopt(subcommand)]
-    command: Subcommand,
 }
 
 #[derive(Debug)]
@@ -140,9 +139,6 @@ impl From<regex::Error> for BattleToolsError {
 fn main() -> Result<(), BattleToolsError> {
     let options = Options::from_args();
 
-    if let Some(_exclude) = options.exclude {
-        unimplemented!();
-    }
     if let Some(_threads) = options.threads {
         unimplemented!();
     }
@@ -155,7 +151,7 @@ fn main() -> Result<(), BattleToolsError> {
             minimum_elo,
         } => {
             let mut parser = StatisticsDirectoryParser::new(minimum_elo);
-            parser.handle_directories(directories)?;
+            parser.handle_directories(directories, options.exclude)?;
 
             let mut produced_output = false;
             if let Some(csv_path) = csv_path {
@@ -179,7 +175,7 @@ fn main() -> Result<(), BattleToolsError> {
             forfeits_only,
         } => {
             let mut parser = BattleSearcher::new(&username, wins_only, forfeits_only);
-            parser.handle_directories(directories)?;
+            parser.handle_directories(directories, options.exclude)?;
         }
         Subcommand::Anonymize {
             directories,
@@ -189,7 +185,7 @@ fn main() -> Result<(), BattleToolsError> {
             // create dir if needed
             fs::create_dir_all(&output_dir)?;
             let mut anonymizer = AnonymizingDirectoryParser::new(false, output_dir);
-            anonymizer.handle_directories(directories)?;
+            anonymizer.handle_directories(directories, options.exclude)?;
         }
     }
 
