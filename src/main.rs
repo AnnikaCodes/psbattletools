@@ -111,6 +111,7 @@ pub enum BattleToolsError {
     IOError(std::io::Error),
     JSONParsingError(serde_json::Error),
     RegexError(regex::Error),
+    ThreadPoolError(rayon::ThreadPoolBuildError),
     InvalidLog(String),
     PathConversion(String),
     IncompleteAnonymization(String),
@@ -135,12 +136,20 @@ impl From<regex::Error> for BattleToolsError {
         BattleToolsError::RegexError(error)
     }
 }
+impl From<rayon::ThreadPoolBuildError> for BattleToolsError {
+    fn from(error: rayon::ThreadPoolBuildError) -> Self {
+        BattleToolsError::ThreadPoolError(error)
+    }
+}
 
 fn main() -> Result<(), BattleToolsError> {
     let options = Options::from_args();
 
-    if let Some(_threads) = options.threads {
-        unimplemented!();
+    if let Some(threads) = options.threads {
+        // see https://stackoverflow.com/questions/59205184/how-can-i-change-the-number-of-threads-rayon-uses
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build_global()?;
     }
 
     match options.command {
