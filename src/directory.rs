@@ -27,7 +27,11 @@ pub trait LogParser<R> {
 /// Iterates over directories and executes code on each log file in parallel.
 pub trait ParallelDirectoryParser<R> {
     /// `exclusion` will exclude any directory or file that matches the exclusion
-    fn handle_directories(&mut self, dirs: Vec<PathBuf>, exclusion: Option<String>) -> Result<(), BattleToolsError>;
+    fn handle_directories(
+        &mut self,
+        dirs: Vec<PathBuf>,
+        exclusion: Option<String>,
+    ) -> Result<(), BattleToolsError>;
 }
 
 impl<T, R> ParallelDirectoryParser<R> for T
@@ -35,7 +39,11 @@ where
     T: LogParser<R> + Sync + Send,
     R: Send,
 {
-    fn handle_directories(&mut self, dirs: Vec<PathBuf>, exclusion: Option<String>) -> Result<(), BattleToolsError> {
+    fn handle_directories(
+        &mut self,
+        dirs: Vec<PathBuf>,
+        exclusion: Option<String>,
+    ) -> Result<(), BattleToolsError> {
         // We don't know if we'll get a directory with lots of subdirectories or one with lots of JSON files,
         // so we always use parallel iteration.
 
