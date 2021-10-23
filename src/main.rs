@@ -97,7 +97,6 @@ struct Options {
         help = "Filenames and directories including this string will be ignored"
     )]
     exclude: Option<String>,
-    // TODO: implement
     #[structopt(
         long = "threads",
         short = "j",

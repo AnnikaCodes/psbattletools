@@ -27,8 +27,6 @@ impl BattleSearcher {
 }
 
 impl LogParser<()> for BattleSearcher {
-    /// json is in the form [p1name, p2name, winner, endType]
-    /// TODO: handle `date`
     fn handle_log_file(&self, raw_json: String, path: &Path) -> Result<(), BattleToolsError> {
         let date = match path.parent() {
             Some(p) => p
