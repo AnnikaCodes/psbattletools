@@ -8,12 +8,11 @@ edition = "2021"
 [dependencies]
 gjson = "0.8.0"
 indexmap = "1.7.0"
+json = "0.12.4"
 lazy_static = "1.4.0"
-pikkr-annika = "0.16.1"
 prettytable-rs = "0.8.0"
 rayon = "1.5.1"
 regex = "1.5.4"
-serde_json = "1.0.68"
 structopt = "0.3.23"
 tests = { path = "./tests" }
 

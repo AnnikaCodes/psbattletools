@@ -108,7 +108,7 @@ struct Options {
 #[derive(Debug)]
 pub enum BattleToolsError {
     IOError(std::io::Error),
-    JSONParsingError(serde_json::Error),
+    JSONParsingError(json::Error),
     RegexError(regex::Error),
     ThreadPoolError(rayon::ThreadPoolBuildError),
     InvalidLog(String),
@@ -125,8 +125,8 @@ impl From<String> for BattleToolsError {
         BattleToolsError::InvalidLog(error)
     }
 }
-impl From<serde_json::Error> for BattleToolsError {
-    fn from(error: serde_json::Error) -> Self {
+impl From<json::Error> for BattleToolsError {
+    fn from(error: json::Error) -> Self {
         BattleToolsError::JSONParsingError(error)
     }
 }

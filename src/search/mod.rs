@@ -12,10 +12,6 @@ pub struct BattleSearcher {
     pub forfeits_only: bool,
 }
 
-fn bytes_to_id(bytes: &Option<&[u8]>) -> Option<String> {
-    bytes.as_ref().map(|b| to_id(&String::from_utf8_lossy(b)))
-}
-
 impl BattleSearcher {
     pub fn new(username: &str, wins_only: bool, forfeits_only: bool) -> Self {
         Self {
@@ -47,66 +43,33 @@ impl LogParser<()> for BattleSearcher {
             None => "unknown date",
         };
 
-        let mut json_parser = pikkr_annika::Pikkr::new(
-            &[
-                "$.p1".as_bytes(),     // p1 name - idx 0
-                "$.p2".as_bytes(),     // p2 name - idx 1
-                "$.winner".as_bytes(), // winner - idx 2
-                "$.endType".as_bytes(),
-            ],
-            2,
-        )
-        .unwrap();
-        let json = json_parser.parse(&raw_json).unwrap();
-
-        if json.len() != 4 {
-            // should never happen
-            return Err(BattleToolsError::InvalidLog(format!(
-                "BattleSearcher::check_log(): found {} elements in parsed JSON (expected 4)",
-                json.len()
-            )));
-        }
-
         // parse players
-        let p1id = match bytes_to_id(json.get(0).unwrap()) {
-            Some(a) => a,
-            None => return Err(BattleToolsError::InvalidLog("No p1 value".to_string())),
-        };
-        let p2id = match bytes_to_id(json.get(1).unwrap()) {
-            Some(a) => a,
-            None => return Err(BattleToolsError::InvalidLog("No p2 value".to_string())),
-        };
-        let p1_is_searched_user = p1id == self.user_id;
-        let p2_is_searched_user = p2id == self.user_id;
-        if !p1_is_searched_user && !p2_is_searched_user {
+        // TODO: can we get an ID directly from JSON?
+        let p1id = to_id(gjson::get(&raw_json, "p1").str());
+        let p2id = to_id(gjson::get(&raw_json, "p2").str());
+        if p1id != self.user_id && p2id != self.user_id {
             // Searched user is not a player in the battle.
             return Ok(());
         }
 
         // parse winner
-        let winner_id = bytes_to_id(json.get(2).unwrap());
-        let searched_user_won = match winner_id {
-            Some(ref winner) => winner == &self.user_id,
-            None => false,
-        };
-        if !searched_user_won && self.wins_only {
+        let winner_id = to_id(gjson::get(&raw_json, "winner").str());
+        if self.wins_only && winner_id != self.user_id {
             return Ok(());
         }
 
         // parse endType
-        let is_forfeit = match json.get(3).unwrap() {
-            Some(bytes) => String::from_utf8_lossy(bytes) == "\"forfeit\"",
-            None => false,
-        };
+        let is_forfeit = gjson::get(&raw_json, "endType").str() == "forfeit";
         if !is_forfeit && self.forfeits_only {
             return Ok(());
         }
 
         // formatting
         let win_type_str = if is_forfeit { "by forfeit" } else { "normally" };
-        let win_str = match winner_id {
-            Some(ref winner) => format!("{} won {}", winner, win_type_str),
-            None => String::from("there was no winner"),
+        let win_str = if winner_id.is_empty() {
+            String::from("there was no winner")
+        } else {
+            format!("{} won {}", winner_id, win_type_str)
         };
 
         let room = path

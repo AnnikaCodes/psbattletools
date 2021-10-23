@@ -7,8 +7,6 @@ use std::sync::Mutex;
 use lazy_static::*;
 use regex::Regex;
 
-use serde_json::{json, Value};
-
 use crate::{id::to_id, BattleToolsError};
 
 lazy_static! {
@@ -63,7 +61,7 @@ impl Anonymizer {
     ///
     /// Returns a tuple: (json, battle_number)
     pub fn anonymize(&self, raw: &str) -> Result<(String, u32), BattleToolsError> {
-        let json: serde_json::Map<String, Value> = serde_json::from_str(raw)?;
+        let json = json::parse(raw)?;
 
         let p1 = json["p1"]
             .as_str()
@@ -90,13 +88,13 @@ impl Anonymizer {
 
         let mut json_result = json.clone();
         // Anonymize
-        json_result["p1"] = Value::String(p1_anon.clone());
-        json_result["p2"] = Value::String(p2_anon.clone());
-        json_result["winner"] = Value::String(winner_anon);
+        json_result["p1"] = json::from(p1_anon.clone());
+        json_result["p2"] = json::from(p2_anon.clone());
+        json_result["winner"] = json::from(winner_anon);
 
-        json_result["p1rating"] = Value::Null;
-        json_result["p2rating"] = Value::Null;
-        json_result["roomid"] = Value::Null;
+        json_result["p1rating"] = json::JsonValue::Null;
+        json_result["p2rating"] = json::JsonValue::Null;
+        json_result["roomid"] = json::JsonValue::Null;
 
         // "Sat Nov 21 2020 17:05:04 GMT-0500 (Eastern Standard Time)" -> "Sat Nov 21 2020 17"
         let mut timestamp = json["timestamp"]
@@ -107,39 +105,40 @@ impl Anonymizer {
             .to_owned();
         timestamp.push_str(":XX");
 
-        json_result["timestamp"] = json!(timestamp);
+        json_result["timestamp"] = json::from(timestamp);
 
-        let il = json["inputLog"]
-            .as_array()
-            .ok_or(format!("Bad JSON for inputlog {}", json["inputLog"]))?
-            .iter();
-        json_result["inputLog"] = serde_json::json!(il
-            .filter_map(|inputlog_part| {
-                let inputlog_part_string: &str = inputlog_part.as_str().unwrap();
-                if inputlog_part_string.starts_with(">player p1") {
-                    let res = INPUTLOG_ANONYMIZER_REGEX
-                        .replace_all(inputlog_part_string, |_: &regex::Captures| {
-                            format!("\"name\":\"{}\",", p1_anon)
-                        });
-                    return Some(json!(res));
-                } else if inputlog_part_string.starts_with(">player p2") {
-                    let res = INPUTLOG_ANONYMIZER_REGEX
-                        .replace_all(inputlog_part_string, |_: &regex::Captures| {
-                            format!("\"name\":\"{}\",", p2_anon)
-                        });
-                    return Some(json!(res));
-                } else if inputlog_part_string.starts_with(">chat ") {
-                    return None;
-                }
+        json_result["inputLog"] = json::from(
+            json["inputLog"]
+                .entries()
+                .filter_map(|(_, inputlog_part)| {
+                    let inputlog_part_string: &str = inputlog_part.as_str().unwrap();
+                    if inputlog_part_string.starts_with(">player p1") {
+                        let res = INPUTLOG_ANONYMIZER_REGEX
+                            .replace_all(inputlog_part_string, |_: &regex::Captures| {
+                                format!("\"name\":\"{}\",", p1_anon)
+                            })
+                            .into_owned();
+                        return Some(res);
+                    } else if inputlog_part_string.starts_with(">player p2") {
+                        let res = INPUTLOG_ANONYMIZER_REGEX
+                            .replace_all(inputlog_part_string, |_: &regex::Captures| {
+                                format!("\"name\":\"{}\",", p2_anon)
+                            })
+                            .into_owned();
+                        return Some(res);
+                    } else if inputlog_part_string.starts_with(">chat ") {
+                        return None;
+                    }
 
-                Some(inputlog_part.clone())
-            })
-            .collect::<Vec<serde_json::Value>>());
-
-        let log = json["log"]
-            .as_array()
-            .ok_or(format!("Bad JSON for log {}", json["log"]))?
-            .iter();
+                    Some(
+                        inputlog_part
+                            .as_str()
+                            .expect("input log contained non-string values")
+                            .to_string(),
+                    )
+                })
+                .collect::<Vec<_>>(),
+        );
 
         let p1regex = Regex::from_str(
             &[
@@ -162,50 +161,59 @@ impl Anonymizer {
             .join(""),
         )?;
 
-        json_result["log"] = serde_json::json!(log
-            .filter_map(|log_part| {
-                let log_part_string: &str = &match log_part.as_str() {
-                    Some(a) => a.to_owned(),
-                    None => format!("Bad JSON for logpart {:#?}", log_part),
-                };
+        json_result["log"] = json::from(
+            json["log"]
+                .entries()
+                .filter_map(|(_, log_part)| {
+                    let log_part_string: &str = &match log_part.as_str() {
+                        Some(a) => a.to_owned(),
+                        None => format!("Bad JSON for logpart {:#?}", log_part),
+                    };
 
-                // Remove chat and timers (privacy threat)
-                if log_part_string.starts_with("|c|")
-                    || log_part_string.starts_with("|c:|")
-                    || log_part_string.starts_with("|inactive|")
-                {
-                    return None;
-                }
+                    // Remove chat and timers (privacy threat)
+                    if log_part_string.starts_with("|c|")
+                        || log_part_string.starts_with("|c:|")
+                        || log_part_string.starts_with("|inactive|")
+                    {
+                        return None;
+                    }
 
-                if log_part_string.starts_with("|j|")
-                    || log_part_string.starts_with("|J|")
-                    || log_part_string.starts_with("|l|")
-                    || log_part_string.starts_with("|L|")
-                    || log_part_string.starts_with("|N|")
-                    || log_part_string.starts_with("|n|")
-                    || log_part_string.starts_with("|win|")
-                    || log_part_string.starts_with("|tie|")
-                    || log_part_string.starts_with("|-message|")
-                    || log_part_string.starts_with("|raw|")
-                    || log_part_string.starts_with("|player|")
-                {
-                    return Some(json!(log_part_string
-                        .replace(p1, &p1_anon)
-                        .replace(p2, &p2_anon)
-                        .replace(&p1_id, &p1_anon)
-                        .replace(&p2_id, &p2_anon)));
-                }
+                    if log_part_string.starts_with("|j|")
+                        || log_part_string.starts_with("|J|")
+                        || log_part_string.starts_with("|l|")
+                        || log_part_string.starts_with("|L|")
+                        || log_part_string.starts_with("|N|")
+                        || log_part_string.starts_with("|n|")
+                        || log_part_string.starts_with("|win|")
+                        || log_part_string.starts_with("|tie|")
+                        || log_part_string.starts_with("|-message|")
+                        || log_part_string.starts_with("|raw|")
+                        || log_part_string.starts_with("|player|")
+                    {
+                        return Some(
+                            log_part_string
+                                .replace(p1, &p1_anon)
+                                .replace(p2, &p2_anon)
+                                .replace(&p1_id, &p1_anon)
+                                .replace(&p2_id, &p2_anon),
+                        );
+                    }
 
-                return Some(json!(p2regex.replace_all(
-                    p1regex
-                        .replace_all(log_part_string, &p1_anon as &str)
-                        .as_ref(),
-                    &p2_anon as &str
-                )));
-            })
-            .collect::<Vec<serde_json::Value>>());
+                    return Some(
+                        p2regex
+                            .replace_all(
+                                p1regex
+                                    .replace_all(log_part_string, &p1_anon as &str)
+                                    .as_ref(),
+                                &p2_anon as &str,
+                            )
+                            .to_string(),
+                    );
+                })
+                .collect::<Vec<_>>(),
+        );
 
-        let result = serde_json::to_string(&json_result)?;
+        let result = json::stringify(json_result);
 
         if self.is_safe
             && (result.contains(p1)
