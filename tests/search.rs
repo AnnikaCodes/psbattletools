@@ -1,12 +1,13 @@
 #![feature(test)]
+use serial_test::serial;
 use std::path::PathBuf;
 use std::process::Command;
-
 use tests::*;
 
 extern crate test;
 
 #[test]
+#[serial]
 fn test_search() {
     build_test_dir(1_000).unwrap();
     let mut path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
@@ -25,6 +26,7 @@ fn test_search() {
 }
 
 #[test]
+#[serial]
 fn test_search_forfeit() {
     build_test_dir(1_000).unwrap();
     let mut path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
@@ -47,6 +49,7 @@ fn test_search_forfeit() {
 }
 
 #[test]
+#[serial]
 fn test_search_wins_only() {
     build_test_dir(1_000).unwrap();
     let mut path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());

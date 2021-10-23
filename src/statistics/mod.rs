@@ -56,6 +56,7 @@ mod unit_tests {
     extern crate test;
 
     use super::*;
+    use serial_test::serial;
     use test::Bencher;
     use tests::*;
 
@@ -72,6 +73,7 @@ mod unit_tests {
     }
 
     #[test]
+    #[serial]
     fn test_handle_directory_1k() {
         build_test_dir(1_000).unwrap();
         let mut parser = StatisticsDirectoryParser::new(None);

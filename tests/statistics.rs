@@ -1,8 +1,8 @@
 #![feature(test)]
+use lazy_static::lazy_static;
+use serial_test::serial;
 use std::path::PathBuf;
 use std::process::Command;
-
-use lazy_static::lazy_static;
 use tests::*;
 
 extern crate test;
@@ -52,6 +52,7 @@ Exeggutor-Alola,1000,0,0,-31.622776";
 }
 
 #[test]
+#[serial]
 fn test_table() {
     build_test_dir(1_000).unwrap();
     let mut path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
@@ -75,6 +76,7 @@ fn test_table() {
 }
 
 #[test]
+#[serial]
 fn test_csv() {
     build_test_dir(1_000).unwrap();
     let mut path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
@@ -97,6 +99,7 @@ fn test_csv() {
 }
 
 #[test]
+#[serial]
 fn test_default_output() {
     build_test_dir(1_000).unwrap();
     let mut path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
@@ -117,6 +120,7 @@ fn test_default_output() {
 }
 
 #[test]
+#[serial]
 fn test_min_elo() {
     build_test_dir(1_000).unwrap();
     let mut path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
@@ -152,6 +156,7 @@ fn test_min_elo() {
 }
 
 #[test]
+#[serial]
 fn test_exclusions() {
     build_test_dir(1_000).unwrap();
     let mut path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
