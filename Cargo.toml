@@ -2,6 +2,9 @@
 name = "psbattletools"
 version = "0.1.0"
 edition = "2021"
+description = "Command-line program to manage Pokémon Showdown battle logs."
+license = "MIT"
+repository = "https://github.com/AnnikaCodes/psbattletools"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -18,7 +21,7 @@ structopt = "0.3.23"
 [dev-dependencies]
 tests = { path = "./tests" }
 cargo-husky = { version = "1", default-features = false, features = ["prepush-hook", "run-cargo-clippy", "run-cargo-fmt"] }
-serial_test = "*"
+serial_test = "0.5.1"
 
 [features]
 bench_old_battlesearch = []
