@@ -11,14 +11,14 @@ pub trait StatsOutput {
 
 /// Parses a directory and computes winrates on the battles within.
 pub struct StatisticsDirectoryParser {
-    min_elo: u64,
+    min_elo: Option<u64>,
     stats: Stats,
 }
 
 impl StatisticsDirectoryParser {
     pub fn new(min_elo: Option<u64>) -> Self {
         Self {
-            min_elo: min_elo.unwrap_or(0),
+            min_elo,
             stats: Stats::new(),
         }
     }
@@ -30,7 +30,6 @@ impl LogParser<Vec<GameResult>> for StatisticsDirectoryParser {
         raw_json: String,
         _: &std::path::Path,
     ) -> Result<Vec<GameResult>, BattleToolsError> {
-        // TODO: potentially optimize by not comparing min_elo if unnecessary
         Stats::process_json(self.min_elo, &raw_json)
     }
 

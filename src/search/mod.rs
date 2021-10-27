@@ -44,7 +44,6 @@ impl LogParser<()> for BattleSearcher {
         };
 
         // parse players
-        // TODO: can we get an ID directly from JSON?
         let p1id = to_id(gjson::get(&raw_json, "p1").str());
         let p2id = to_id(gjson::get(&raw_json, "p2").str());
         if p1id != self.user_id && p2id != self.user_id {

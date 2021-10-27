@@ -17,10 +17,6 @@ pub trait LogParser<R> {
     /// Parses the results from an entire directory.
     /// Guaranteed to be only called once per invocation of ParallelDirectoryParser::handle_directory;
     /// if subdirectories are found, their parse results will be combined together and passed to handle_results.
-    ///
-    /// TODO: optimizations for when there is no need to handle results at all?
-    ///
-    /// TODO: is it better to make this accept a FilterMap<R>?
     fn handle_results(&mut self, results: Vec<R>) -> Result<(), BattleToolsError>;
 }
 
@@ -74,10 +70,10 @@ where
                                 Ok(mut s) => s.push(entry.path()),
                                 Err(e) => {
                                     // We can't just propagate this error, since we're in a filter_map
-                                    // If the mutex is poisoned (which shouldn't ever happen?) we can probably just panic
-                                    // TODO: make sure the mutex can't ever be poisoned
+                                    // If the mutex is poisoned we can probably just panic, since the mutex
+                                    // will only be poisoned if another thread panics.
                                     panic!(
-                                        "Mutex for list of directories to process poisoned: {}",
+                                        "Mutex for list of directories to process poisoned (this is probably because of another error): {}",
                                         e
                                     );
                                 }

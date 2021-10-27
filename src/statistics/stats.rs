@@ -67,12 +67,14 @@ impl Stats {
         }
     }
 
-    pub fn process_json(min_elo: u64, json: &str) -> Result<Vec<GameResult>, BattleToolsError> {
+    pub fn process_json(min_elo: Option<u64>, json: &str) -> Result<Vec<GameResult>, BattleToolsError> {
         // ELO check
-        for elo_property in ["p1rating.elo", "p2rating.elo"].iter() {
-            if (gjson::get(json, elo_property).f32() as u64) < min_elo {
-                // ignore
-                return Ok(vec![]);
+        if let Some(elo) = min_elo {
+            for elo_property in ["p1rating.elo", "p2rating.elo"].iter() {
+                if (gjson::get(json, elo_property).f32() as u64) < elo {
+                    // ignore
+                    return Ok(vec![]);
+                }
             }
         }
 
@@ -214,21 +216,26 @@ mod unit_tests {
 
     fn add_records(stats: &mut Stats, num: u32) {
         for _ in 0..num {
-            let s = Stats::process_json(1050, &SAMPLE_JSON).unwrap();
+            let s = Stats::process_json(Some(1050), &SAMPLE_JSON).unwrap();
             stats.add_game_results(s);
         }
     }
 
     #[bench]
     pub fn bench_process_json(b: &mut Bencher) {
-        b.iter(|| Stats::process_json(1050, &SAMPLE_JSON));
+        b.iter(|| Stats::process_json(Some(1050), &SAMPLE_JSON));
+    }
+
+    #[bench]
+    pub fn bench_process_json_no_min_elo(b: &mut Bencher) {
+        b.iter(|| Stats::process_json(None, &SAMPLE_JSON));
     }
 
     #[bench]
     pub fn bench_process_and_add_json(b: &mut Bencher) {
         let mut stats = Stats::new();
         b.iter(|| {
-            let s = Stats::process_json(1050, &SAMPLE_JSON).unwrap();
+            let s = Stats::process_json(Some(1050), &SAMPLE_JSON).unwrap();
             stats.add_game_results(s);
         });
     }

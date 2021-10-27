@@ -81,6 +81,11 @@ enum Subcommand {
             parse(from_os_str)
         )]
         output_dir: PathBuf,
+        #[structopt(
+            long = "safe",
+            help = "Check each anonymized log for personal information and print a warning if so"
+        )]
+        is_safe: bool,
     },
 }
 
@@ -188,11 +193,11 @@ fn main() -> Result<(), BattleToolsError> {
         Subcommand::Anonymize {
             directories,
             output_dir,
+            is_safe,
         } => {
-            // TODO: Add --safe option
             // create dir if needed
             fs::create_dir_all(&output_dir)?;
-            let mut anonymizer = AnonymizingDirectoryParser::new(false, output_dir);
+            let mut anonymizer = AnonymizingDirectoryParser::new(is_safe, output_dir);
             anonymizer.handle_directories(directories, options.exclude)?;
         }
     }
