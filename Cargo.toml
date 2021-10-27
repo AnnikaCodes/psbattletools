@@ -14,9 +14,9 @@ prettytable-rs = "0.8.0"
 rayon = "1.5.1"
 regex = "1.5.4"
 structopt = "0.3.23"
-tests = { path = "./tests" }
 
 [dev-dependencies]
+tests = { path = "./tests" }
 cargo-husky = { version = "1", default-features = false, features = ["prepush-hook", "run-cargo-clippy", "run-cargo-fmt"] }
 serial_test = "*"
 

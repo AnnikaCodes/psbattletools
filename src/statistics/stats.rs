@@ -67,7 +67,10 @@ impl Stats {
         }
     }
 
-    pub fn process_json(min_elo: Option<u64>, json: &str) -> Result<Vec<GameResult>, BattleToolsError> {
+    pub fn process_json(
+        min_elo: Option<u64>,
+        json: &str,
+    ) -> Result<Vec<GameResult>, BattleToolsError> {
         // ELO check
         if let Some(elo) = min_elo {
             for elo_property in ["p1rating.elo", "p2rating.elo"].iter() {
