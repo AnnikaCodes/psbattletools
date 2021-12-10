@@ -25,9 +25,9 @@ fn test_no_terms_and_identicality() {
     let mut out_file_1 = out_dir.clone();
     out_file_1.push("1.log.json");
     let output_1 = std::fs::read_to_string(&out_file_1)
-        .expect(&format!("Couldn't read output file {:?}", out_file_1));
+        .unwrap_or_else(|_| panic!("Couldn't read output file {:?}", out_file_1));
 
-    let mut out_file_999 = out_dir.clone();
+    let mut out_file_999 = out_dir;
     out_file_999.push("999.log.json");
     let output_999 = std::fs::read_to_string(out_file_999).expect("Couldn't read output file");
 
