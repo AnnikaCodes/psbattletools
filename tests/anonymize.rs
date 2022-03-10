@@ -17,7 +17,7 @@ fn test_no_terms_and_identicality() {
     Command::new(&path)
         .arg("anonymize")
         .arg(&*TEST_ROOT_DIR)
-        .arg("--o")
+        .arg("-o")
         .arg(&out_dir)
         .output()
         .expect("Failed to execute command");
