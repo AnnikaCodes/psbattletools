@@ -11,9 +11,9 @@ pub struct AnonymizingDirectoryParser {
 }
 
 impl AnonymizingDirectoryParser {
-    pub fn new(is_safe: bool, output_directory: PathBuf) -> Self {
+    pub fn new(is_safe: bool, no_log: bool, output_directory: PathBuf) -> Self {
         Self {
-            anonymizer: Anonymizer::new(is_safe),
+            anonymizer: Anonymizer::new(is_safe, no_log),
             output_directory,
         }
     }
@@ -59,7 +59,7 @@ mod unit_tests {
         build_test_dir(1_000).unwrap();
         std::fs::create_dir_all(&*OUTPUT_PATH).unwrap();
 
-        let mut searcher = AnonymizingDirectoryParser::new(false, OUTPUT_PATH.clone());
+        let mut searcher = AnonymizingDirectoryParser::new(false, false, OUTPUT_PATH.clone());
         b.iter(|| {
             searcher
                 .handle_directories(vec![TEST_ROOT_DIR.clone()], None)

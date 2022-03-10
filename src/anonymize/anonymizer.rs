@@ -47,13 +47,15 @@ pub struct Anonymizer {
     state: Mutex<SharedState>,
     /// Panics if player names sneak past
     is_safe: bool,
+    no_log: bool,
 }
 
 impl Anonymizer {
-    pub fn new(is_safe: bool) -> Self {
+    pub fn new(is_safe: bool, no_log: bool) -> Self {
         Self {
             state: Mutex::new(SharedState::new()),
             is_safe,
+            no_log,
         }
     }
 
@@ -98,8 +100,15 @@ impl Anonymizer {
         json_result["p2"] = json::from(p2_anon.clone());
         json_result["winner"] = json::from(winner_anon);
 
-        json_result["p1rating"] = json::JsonValue::Null;
-        json_result["p2rating"] = json::JsonValue::Null;
+        json_result["p1rating"] = match json["p1rating"]["elo"].as_f64() {
+            Some(elo) => json::from((elo / 50.0).round() * 50.0),
+            None => json::JsonValue::Null,
+        };
+        json_result["p2rating"] = match json["p2rating"]["elo"].as_f64() {
+            Some(elo) => json::from((elo / 50.0).round() * 50.0),
+            None => json::JsonValue::Null,
+        };
+
         json_result["roomid"] = json::JsonValue::Null;
 
         // "Sat Nov 21 2020 17:05:04 GMT-0500 (Eastern Standard Time)" -> "Sat Nov 21 2020 17"
@@ -113,38 +122,42 @@ impl Anonymizer {
 
         json_result["timestamp"] = json::from(timestamp);
 
-        json_result["inputLog"] = json::from(
-            json["inputLog"]
-                .entries()
-                .filter_map(|(_, inputlog_part)| {
-                    let inputlog_part_string: &str = inputlog_part.as_str().unwrap();
-                    if inputlog_part_string.starts_with(">player p1") {
-                        let res = INPUTLOG_ANONYMIZER_REGEX
-                            .replace_all(inputlog_part_string, |_: &regex::Captures| {
-                                format!("\"name\":\"{}\",", p1_anon)
-                            })
-                            .into_owned();
-                        return Some(res);
-                    } else if inputlog_part_string.starts_with(">player p2") {
-                        let res = INPUTLOG_ANONYMIZER_REGEX
-                            .replace_all(inputlog_part_string, |_: &regex::Captures| {
-                                format!("\"name\":\"{}\",", p2_anon)
-                            })
-                            .into_owned();
-                        return Some(res);
-                    } else if inputlog_part_string.starts_with(">chat ") {
-                        return None;
-                    }
+        if self.no_log {
+            json_result["inputLog"] = json::array!();
+        } else {
+            json_result["inputLog"] = json::from(
+                json["inputLog"]
+                    .members()
+                    .filter_map(|inputlog_part| {
+                        let inputlog_part_string: &str = inputlog_part.as_str().unwrap();
+                        if inputlog_part_string.starts_with(">player p1") {
+                            let res = INPUTLOG_ANONYMIZER_REGEX
+                                .replace_all(inputlog_part_string, |_: &regex::Captures| {
+                                    format!("\"name\":\"{}\",", p1_anon)
+                                })
+                                .into_owned();
+                            return Some(res);
+                        } else if inputlog_part_string.starts_with(">player p2") {
+                            let res = INPUTLOG_ANONYMIZER_REGEX
+                                .replace_all(inputlog_part_string, |_: &regex::Captures| {
+                                    format!("\"name\":\"{}\",", p2_anon)
+                                })
+                                .into_owned();
+                            return Some(res);
+                        } else if inputlog_part_string.starts_with(">chat ") {
+                            return None;
+                        }
 
-                    Some(
-                        inputlog_part
-                            .as_str()
-                            .expect("input log contained non-string values")
-                            .to_string(),
-                    )
-                })
-                .collect::<Vec<_>>(),
-        );
+                        Some(
+                            inputlog_part
+                                .as_str()
+                                .expect("input log contained non-string values")
+                                .to_string(),
+                        )
+                    })
+                    .collect::<Vec<_>>(),
+            );
+        }
 
         let p1regex = Regex::from_str(
             &[
@@ -167,57 +180,61 @@ impl Anonymizer {
             .join(""),
         )?;
 
-        json_result["log"] = json::from(
-            json["log"]
-                .entries()
-                .filter_map(|(_, log_part)| {
-                    let log_part_string: &str = &match log_part.as_str() {
-                        Some(a) => a.to_owned(),
-                        None => format!("Bad JSON for logpart {:#?}", log_part),
-                    };
+        if self.no_log {
+            json_result["log"] = json::array!();
+        } else {
+            json_result["log"] = json::from(
+                json["log"]
+                    .members()
+                    .filter_map(|log_part| {
+                        let log_part_string: &str = &match log_part.as_str() {
+                            Some(a) => a.to_owned(),
+                            None => format!("Bad JSON for logpart {:#?}", log_part),
+                        };
 
-                    // Remove chat and timers (privacy threat)
-                    if log_part_string.starts_with("|c|")
-                        || log_part_string.starts_with("|c:|")
-                        || log_part_string.starts_with("|inactive|")
-                    {
-                        return None;
-                    }
+                        // Remove chat and timers (privacy threat)
+                        if log_part_string.starts_with("|c|")
+                            || log_part_string.starts_with("|c:|")
+                            || log_part_string.starts_with("|inactive|")
+                        {
+                            return None;
+                        }
 
-                    if log_part_string.starts_with("|j|")
-                        || log_part_string.starts_with("|J|")
-                        || log_part_string.starts_with("|l|")
-                        || log_part_string.starts_with("|L|")
-                        || log_part_string.starts_with("|N|")
-                        || log_part_string.starts_with("|n|")
-                        || log_part_string.starts_with("|win|")
-                        || log_part_string.starts_with("|tie|")
-                        || log_part_string.starts_with("|-message|")
-                        || log_part_string.starts_with("|raw|")
-                        || log_part_string.starts_with("|player|")
-                    {
+                        if log_part_string.starts_with("|j|")
+                            || log_part_string.starts_with("|J|")
+                            || log_part_string.starts_with("|l|")
+                            || log_part_string.starts_with("|L|")
+                            || log_part_string.starts_with("|N|")
+                            || log_part_string.starts_with("|n|")
+                            || log_part_string.starts_with("|win|")
+                            || log_part_string.starts_with("|tie|")
+                            || log_part_string.starts_with("|-message|")
+                            || log_part_string.starts_with("|raw|")
+                            || log_part_string.starts_with("|player|")
+                        {
+                            return Some(
+                                log_part_string
+                                    .replace(p1, &p1_anon)
+                                    .replace(p2, &p2_anon)
+                                    .replace(&p1_id, &p1_anon)
+                                    .replace(&p2_id, &p2_anon),
+                            );
+                        }
+
                         return Some(
-                            log_part_string
-                                .replace(p1, &p1_anon)
-                                .replace(p2, &p2_anon)
-                                .replace(&p1_id, &p1_anon)
-                                .replace(&p2_id, &p2_anon),
+                            p2regex
+                                .replace_all(
+                                    p1regex
+                                        .replace_all(log_part_string, &p1_anon as &str)
+                                        .as_ref(),
+                                    &p2_anon as &str,
+                                )
+                                .to_string(),
                         );
-                    }
-
-                    return Some(
-                        p2regex
-                            .replace_all(
-                                p1regex
-                                    .replace_all(log_part_string, &p1_anon as &str)
-                                    .as_ref(),
-                                &p2_anon as &str,
-                            )
-                            .to_string(),
-                    );
-                })
-                .collect::<Vec<_>>(),
-        );
+                    })
+                    .collect::<Vec<_>>(),
+            );
+        }
 
         let result = json::stringify(json_result);
 
@@ -259,13 +276,13 @@ mod unit_tests {
 
     #[bench]
     pub fn bench_anonymize_unsafe(b: &mut Bencher) {
-        let anonymizer = Anonymizer::new(false);
+        let anonymizer = Anonymizer::new(false, false);
         b.iter(|| anonymizer.anonymize(&SAMPLE_JSON).unwrap());
     }
 
     #[bench]
     pub fn bench_anonymize_safe(b: &mut Bencher) {
-        let anonymizer = Anonymizer::new(true);
+        let anonymizer = Anonymizer::new(true, false);
         b.iter(|| anonymizer.anonymize(&SAMPLE_JSON).unwrap());
     }
 
@@ -292,7 +309,7 @@ mod unit_tests {
 
     #[test]
     pub fn anonymization() {
-        let anonymizer = Anonymizer::new(true);
+        let anonymizer = Anonymizer::new(true, false);
         let (json, _) = anonymizer.anonymize(&SAMPLE_JSON).unwrap();
 
         assert_ne!(json, *SAMPLE_JSON);
@@ -306,7 +323,7 @@ mod unit_tests {
             );
         }
 
-        for property in ["p1rating", "p2rating", "roomid"] {
+        for property in ["roomid"] {
             let value = gjson::get(&json, property);
             assert!(
                 !value.exists() || value.kind() == gjson::Kind::Null,
@@ -321,12 +338,40 @@ mod unit_tests {
     // psbattletools should recognize this and not anonymize it.
     #[test]
     pub fn tie() {
-        let anonymizer = Anonymizer::new(true);
+        let anonymizer = Anonymizer::new(true, false);
         let (json, _) = anonymizer.anonymize(&TIE_WINNERSTRING_JSON).unwrap();
         assert_eq!(
             gjson::get(&json, "winner").to_string(),
             "".to_string(),
             "`winner` property not anonymized to and empty string in a tie"
         );
+    }
+
+    #[test]
+    pub fn no_log() {
+        let anonymizer_logs = Anonymizer::new(false, false);
+        let anonymizer_no_logs = Anonymizer::new(false, true);
+        let (logs_json, _) = anonymizer_logs.anonymize(&SAMPLE_JSON).unwrap();
+        let (no_logs_json, _) = anonymizer_no_logs.anonymize(&SAMPLE_JSON).unwrap();
+
+        for should_be_arr in ["log", "inputLog"] {
+            assert!(
+                gjson::get(&no_logs_json, should_be_arr).kind() == gjson::Kind::Array,
+                "{} should be an array in the logless JSON",
+                should_be_arr
+            );
+
+            assert!(
+                gjson::get(&logs_json, should_be_arr).kind() == gjson::Kind::Array,
+                "{} should be an array in the JSON with logs",
+                should_be_arr
+            );
+        }
+
+        assert_eq!(gjson::get(&no_logs_json, "log").array().len(), 0);
+        assert_eq!(gjson::get(&no_logs_json, "inputLog").array().len(), 0);
+
+        assert_ne!(gjson::get(&logs_json, "log").array().len(), 0);
+        assert_ne!(gjson::get(&logs_json, "inputLog").array().len(), 0);
     }
 }

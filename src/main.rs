@@ -86,6 +86,8 @@ enum Subcommand {
             help = "Check each anonymized log for personal information and print a warning if so"
         )]
         is_safe: bool,
+        #[structopt(long = "no-log", help = "Remove input and chatlogs")]
+        no_log: bool,
     },
 }
 
@@ -194,10 +196,11 @@ fn main() -> Result<(), BattleToolsError> {
             directories,
             output_dir,
             is_safe,
+            no_log,
         } => {
             // create dir if needed
             fs::create_dir_all(&output_dir)?;
-            let mut anonymizer = AnonymizingDirectoryParser::new(is_safe, output_dir);
+            let mut anonymizer = AnonymizingDirectoryParser::new(is_safe, no_log, output_dir);
             anonymizer.handle_directories(directories, options.exclude)?;
         }
     }
