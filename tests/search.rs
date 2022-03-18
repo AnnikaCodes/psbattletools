@@ -19,6 +19,7 @@ fn test_search() {
         .arg(&*TEST_ROOT_DIR)
         .output()
         .expect("Failed to execute command");
+    assert!(output.status.success(), "command failed");
 
     let output_str = std::str::from_utf8(&output.stdout).unwrap();
     assert!(output_str.contains("annika vs. rusthaters (annika won normally)"));
@@ -40,6 +41,7 @@ fn test_search_forfeit() {
             .arg(forfeit_arg)
             .output()
             .expect("Failed to execute command");
+        assert!(output.status.success(), "command failed");
 
         let output_str = std::str::from_utf8(&output.stdout).unwrap();
         assert!(!output_str.contains("annika"));
@@ -64,6 +66,7 @@ fn test_search_wins_only() {
             .arg(win_arg)
             .output()
             .expect("Failed to execute command");
+        assert!(annika_output.status.success(), "command failed");
 
         let annika_output_str = std::str::from_utf8(&annika_output.stdout).unwrap();
         assert!(annika_output_str.contains("annika vs. rusthaters (annika won normally)"));
@@ -77,6 +80,7 @@ fn test_search_wins_only() {
             .arg(win_arg)
             .output()
             .expect("Failed to execute command");
+        assert!(rust_haters_output.status.success(), "command failed");
 
         let rust_haters_output_str = std::str::from_utf8(&rust_haters_output.stdout).unwrap();
         assert!(!rust_haters_output_str.contains("annika"));

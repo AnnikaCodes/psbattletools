@@ -14,13 +14,14 @@ fn test_no_terms_and_identicality() {
     let mut path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
     path.push("target/debug/psbattletools");
     let out_dir = PathBuf::from("test-scratch/anonymized");
-    Command::new(&path)
+    let output = Command::new(&path)
         .arg("anonymize")
         .arg(&*TEST_ROOT_DIR)
         .arg("-o")
         .arg(&out_dir)
         .output()
         .expect("Failed to execute command");
+    assert!(output.status.success(), "command failed");
 
     let mut out_file_1 = out_dir.clone();
     out_file_1.push("1.log.json");

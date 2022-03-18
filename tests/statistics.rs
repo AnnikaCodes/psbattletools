@@ -60,13 +60,15 @@ fn test_table() {
     for subcommand in ["stats", "winrates", "statistics"] {
         for table_arg in ["--human-readable", "--pretty"] {
             let out_file = ["test-scratch/pretty-", subcommand, table_arg, ".txt"].join("");
-            Command::new(&path)
+            let output = Command::new(&path)
                 .arg(subcommand)
                 .arg("--pretty")
                 .arg(&out_file)
                 .arg(&*TEST_ROOT_DIR)
                 .output()
                 .expect("Failed to execute command");
+            assert!(output.status.success(), "command failed");
+
             assert_eq!(
                 std::fs::read_to_string(out_file).expect("Couldn't read output file"),
                 *DESIRED_TABLE_OUTPUT
@@ -83,13 +85,14 @@ fn test_csv() {
     path.push("target/debug/psbattletools");
     for subcommand in ["stats", "winrates", "statistics"] {
         let out_file = ["test-scratch/csv-", subcommand, ".csv"].join("");
-        Command::new(&path)
+        let output = Command::new(&path)
             .arg(subcommand)
             .arg("--csv")
             .arg(&out_file)
             .arg(&*TEST_ROOT_DIR)
             .output()
             .expect("Failed to execute command");
+        assert!(output.status.success(), "command failed");
 
         assert_eq!(
             std::fs::read_to_string(out_file).expect("Couldn't read output file"),
@@ -110,6 +113,7 @@ fn test_default_output() {
             .arg(&*TEST_ROOT_DIR)
             .output()
             .expect("Failed to execute command");
+        assert!(output.status.success(), "command failed");
 
         let output_str = std::str::from_utf8(&output.stdout).unwrap();
         assert_eq!(
@@ -134,6 +138,7 @@ fn test_min_elo() {
             .arg(&*TEST_ROOT_DIR)
             .output()
             .expect("Failed to execute command");
+        assert!(normal_output.status.success(), "command failed");
 
         let normal_output_str = std::str::from_utf8(&normal_output.stdout).unwrap();
         assert_eq!(
@@ -148,6 +153,7 @@ fn test_min_elo() {
             .arg(&*TEST_ROOT_DIR)
             .output()
             .expect("Failed to execute command");
+        assert!(no_output.status.success(), "command failed");
 
         let no_output_str = std::str::from_utf8(&no_output.stdout).unwrap();
         assert!(!no_output_str.contains('%'));
@@ -170,6 +176,7 @@ fn test_exclusions() {
         .arg(&*TEST_ROOT_DIR)
         .output()
         .expect("Failed to execute command");
+    assert!(normal_output.status.success(), "command failed");
 
     let normal_output_str = std::str::from_utf8(&normal_output.stdout).unwrap();
     assert_eq!(
@@ -185,6 +192,7 @@ fn test_exclusions() {
         .arg(&*TEST_ROOT_DIR)
         .output()
         .expect("Failed to execute command");
+    assert!(reduced_output.status.success(), "command failed");
 
     let reduced_output_str = std::str::from_utf8(&reduced_output.stdout).unwrap();
     assert!(!reduced_output_str.contains("1000")); // less than 1000 battles
