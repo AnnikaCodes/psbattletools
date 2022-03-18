@@ -88,6 +88,16 @@ enum Subcommand {
         is_safe: bool,
         #[structopt(long = "no-log", help = "Remove input and chatlogs")]
         no_log: bool,
+        #[structopt(
+            long = "save-state-to",
+            help = "Save the state of the anonymizer to this file"
+        )]
+        save_state_to: Option<PathBuf>,
+        #[structopt(
+            long = "load-state-from",
+            help = "Load the state of the anonymizer from this file"
+        )]
+        load_state_from: Option<PathBuf>,
     },
 }
 
@@ -110,16 +120,6 @@ struct Options {
         help = "The maximum number of threads to use for concurrent processing"
     )]
     threads: Option<usize>,
-    #[structopt(
-        long = "save-state-to",
-        help = "Save the state of the anonymizer to this file"
-    )]
-    save_state_to: Option<PathBuf>,
-    #[structopt(
-        long = "load-state-from",
-        help = "Load the state of the anonymizer from this file"
-    )]
-    load_state_from: Option<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -214,11 +214,13 @@ fn main() -> Result<(), BattleToolsError> {
             output_dir,
             is_safe,
             no_log,
+            save_state_to,
+            load_state_from,
         } => {
             // create dir if needed
             fs::create_dir_all(&output_dir)?;
 
-            let mut anonymizer = if let Some(load_path) = options.load_state_from {
+            let mut anonymizer = if let Some(load_path) = load_state_from {
                 let json = fs::read_to_string(load_path)?;
                 let anonymizer = anonymize::Anonymizer::with_json(json, is_safe, no_log);
                 AnonymizingDirectoryParser::with_anonymizer(anonymizer, output_dir)
@@ -228,7 +230,7 @@ fn main() -> Result<(), BattleToolsError> {
 
             anonymizer.handle_directories(directories, options.exclude)?;
 
-            if let Some(save_state_path) = options.save_state_to {
+            if let Some(save_state_path) = save_state_to {
                 let json = anonymizer.get_state_json()?;
                 fs::write(save_state_path, json)?;
             }
