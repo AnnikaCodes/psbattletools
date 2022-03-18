@@ -1,5 +1,6 @@
 // From https://github.com/AnnikaCodes/anonbattle/blob/main/src/anonymizer.rs
 
+use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Mutex;
@@ -14,6 +15,7 @@ lazy_static! {
 }
 
 /// Tracks players
+#[derive(Serialize, Deserialize)]
 struct SharedState {
     players: HashMap<String, String>,
     pub current_battle_number: u32,
@@ -40,6 +42,10 @@ impl SharedState {
             }
         }
     }
+
+    fn to_json(&self) -> serde_json::Result<String> {
+        serde_json::to_string(&self)
+    }
 }
 
 /// Anonymizes string JSON while tracking state
@@ -59,10 +65,19 @@ impl Anonymizer {
         }
     }
 
+    pub fn with_json(json: String, is_safe: bool, no_log: bool) -> Self {
+        let state: SharedState = serde_json::from_str(&json).unwrap();
+        Self {
+            state: Mutex::new(state),
+            is_safe,
+            no_log,
+        }
+    }
+
     /// Anonymizes a log.
     ///
-    /// Returns a tuple: (json, battle_number)
-    pub fn anonymize(&self, raw: &str) -> Result<(String, u32), BattleToolsError> {
+    /// Returns a tuple: (json, battle_number, format)
+    pub fn anonymize(&self, raw: &str) -> Result<(String, u32, String), BattleToolsError> {
         let json = json::parse(raw)?;
 
         let p1 = json["p1"]
@@ -254,7 +269,12 @@ impl Anonymizer {
             tracker.current_battle_number += 1;
             tracker.current_battle_number
         };
-        Ok((result, battle_number))
+        Ok((result, battle_number, json["format"].to_string()))
+    }
+
+    // TODO: actually save this & load it
+    pub fn get_state_json(&self) -> serde_json::Result<String> {
+        self.state.lock().unwrap().to_json()
     }
 }
 
@@ -310,7 +330,7 @@ mod unit_tests {
     #[test]
     pub fn anonymization() {
         let anonymizer = Anonymizer::new(true, false);
-        let (json, _) = anonymizer.anonymize(&SAMPLE_JSON).unwrap();
+        let (json, _, _) = anonymizer.anonymize(&SAMPLE_JSON).unwrap();
         assert_ne!(json, *SAMPLE_JSON);
 
         for term in ["00:00:01", "Annika", "annika", "Rust Haters", "rusthaters"] {
@@ -338,7 +358,7 @@ mod unit_tests {
     #[test]
     pub fn tie() {
         let anonymizer = Anonymizer::new(true, false);
-        let (json, _) = anonymizer.anonymize(&TIE_WINNERSTRING_JSON).unwrap();
+        let (json, _, _) = anonymizer.anonymize(&TIE_WINNERSTRING_JSON).unwrap();
         assert_eq!(
             gjson::get(&json, "winner").to_string(),
             "".to_string(),
@@ -350,8 +370,8 @@ mod unit_tests {
     pub fn no_log() {
         let anonymizer_logs = Anonymizer::new(false, false);
         let anonymizer_no_logs = Anonymizer::new(false, true);
-        let (logs_json, _) = anonymizer_logs.anonymize(&SAMPLE_JSON).unwrap();
-        let (no_logs_json, _) = anonymizer_no_logs.anonymize(&SAMPLE_JSON).unwrap();
+        let (logs_json, _, _) = anonymizer_logs.anonymize(&SAMPLE_JSON).unwrap();
+        let (no_logs_json, _, _) = anonymizer_no_logs.anonymize(&SAMPLE_JSON).unwrap();
 
         for should_be_arr in ["log", "inputLog"] {
             assert!(

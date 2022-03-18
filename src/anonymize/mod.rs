@@ -4,7 +4,7 @@ mod anonymizer;
 use std::path::PathBuf;
 
 use crate::{directory::LogParser, BattleToolsError};
-use anonymizer::Anonymizer;
+pub use anonymizer::Anonymizer;
 pub struct AnonymizingDirectoryParser {
     anonymizer: Anonymizer,
     output_directory: PathBuf,
@@ -17,6 +17,17 @@ impl AnonymizingDirectoryParser {
             output_directory,
         }
     }
+
+    pub fn with_anonymizer(anonymizer: Anonymizer, output_directory: PathBuf) -> Self {
+        Self {
+            anonymizer,
+            output_directory,
+        }
+    }
+
+    pub fn get_state_json(&self) -> serde_json::Result<String> {
+        self.anonymizer.get_state_json()
+    }
 }
 
 impl LogParser<()> for AnonymizingDirectoryParser {
@@ -25,8 +36,10 @@ impl LogParser<()> for AnonymizingDirectoryParser {
         raw_json: String,
         _: &std::path::Path,
     ) -> Result<(), BattleToolsError> {
-        let (json, battle_num) = self.anonymizer.anonymize(&raw_json)?;
+        let (json, battle_num, directory) = self.anonymizer.anonymize(&raw_json)?;
         let mut out_file = self.output_directory.clone();
+        out_file.push(directory);
+        std::fs::create_dir_all(&out_file)?;
         out_file.push(format!("{}.log.json", battle_num));
         std::fs::write(out_file, json)?;
         Ok(())

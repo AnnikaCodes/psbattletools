@@ -24,12 +24,12 @@ fn test_no_terms_and_identicality() {
     assert!(output.status.success(), "command failed");
 
     let mut out_file_1 = out_dir.clone();
-    out_file_1.push("1.log.json");
+    out_file_1.push("gen8randombattle/1.log.json");
     let output_1 = std::fs::read_to_string(&out_file_1)
         .unwrap_or_else(|_| panic!("Couldn't read output file {:?}", out_file_1));
 
     let mut out_file_999 = out_dir;
-    out_file_999.push("999.log.json");
+    out_file_999.push("gen8randombattle/999.log.json");
     let output_999 = std::fs::read_to_string(out_file_999).expect("Couldn't read output file");
 
     for term in ["00:00:01", "Annika", "annika", "Rust Haters", "rusthaters"] {

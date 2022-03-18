@@ -110,6 +110,16 @@ struct Options {
         help = "The maximum number of threads to use for concurrent processing"
     )]
     threads: Option<usize>,
+    #[structopt(
+        long = "save-state-to",
+        help = "Save the state of the anonymizer to this file"
+    )]
+    save_state_to: Option<PathBuf>,
+    #[structopt(
+        long = "load-state-from",
+        help = "Load the state of the anonymizer from this file"
+    )]
+    load_state_from: Option<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -121,7 +131,9 @@ pub enum BattleToolsError {
     InvalidLog(String),
     PathConversion(String),
     IncompleteAnonymization(String),
+    SerializationError(serde_json::Error),
 }
+
 impl From<std::io::Error> for BattleToolsError {
     fn from(error: std::io::Error) -> Self {
         BattleToolsError::IOError(error)
@@ -145,6 +157,11 @@ impl From<regex::Error> for BattleToolsError {
 impl From<rayon::ThreadPoolBuildError> for BattleToolsError {
     fn from(error: rayon::ThreadPoolBuildError) -> Self {
         BattleToolsError::ThreadPoolError(error)
+    }
+}
+impl From<serde_json::Error> for BattleToolsError {
+    fn from(error: serde_json::Error) -> Self {
+        BattleToolsError::SerializationError(error)
     }
 }
 
@@ -200,8 +217,21 @@ fn main() -> Result<(), BattleToolsError> {
         } => {
             // create dir if needed
             fs::create_dir_all(&output_dir)?;
-            let mut anonymizer = AnonymizingDirectoryParser::new(is_safe, no_log, output_dir);
+
+            let mut anonymizer = if let Some(load_path) = options.load_state_from {
+                let json = fs::read_to_string(load_path)?;
+                let anonymizer = anonymize::Anonymizer::with_json(json, is_safe, no_log);
+                AnonymizingDirectoryParser::with_anonymizer(anonymizer, output_dir)
+            } else {
+                AnonymizingDirectoryParser::new(is_safe, no_log, output_dir)
+            };
+
             anonymizer.handle_directories(directories, options.exclude)?;
+
+            if let Some(save_state_path) = options.save_state_to {
+                let json = anonymizer.get_state_json()?;
+                fs::write(save_state_path, json)?;
+            }
         }
     }
 
