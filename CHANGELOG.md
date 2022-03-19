@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.2.3
+- Fix argument parsing
+
 ## v0.2.2
 - Anonymization: output each format into its own directory
 - Support saving/loading anonymizer state (mapping of players <=> ID numbers)
