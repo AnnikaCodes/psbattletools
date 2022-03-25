@@ -8,7 +8,10 @@ use std::sync::Mutex;
 use lazy_static::*;
 use regex::Regex;
 
-use crate::{id::to_id, BattleToolsError};
+use crate::{
+    id::{escape, to_id},
+    BattleToolsError,
+};
 
 lazy_static! {
     static ref INPUTLOG_ANONYMIZER_REGEX: Regex = Regex::new(r#"name":".*","#).unwrap();
@@ -86,6 +89,10 @@ impl Anonymizer {
         let p2 = json["p2"]
             .as_str()
             .ok_or(format!("Bad JSON for p2 {}", json["p2"]))?;
+
+        let p1_escaped = escape(p1);
+        let p2_escaped = escape(p2);
+
         let p1_id = to_id(p1);
         let p2_id = to_id(p2);
 
@@ -146,29 +153,19 @@ impl Anonymizer {
                     .filter_map(|inputlog_part| {
                         let inputlog_part_string: &str = inputlog_part.as_str().unwrap();
                         if inputlog_part_string.starts_with(">player p1") {
-                            let res = INPUTLOG_ANONYMIZER_REGEX
-                                .replace_all(inputlog_part_string, |_: &regex::Captures| {
-                                    format!("\"name\":\"{}\",", p1_anon)
-                                })
-                                .into_owned();
-                            return Some(res);
+                            Some(format!(">player p1 {{\\\"\\\"name\\\":\\\"{}\\\"}}", p1))
                         } else if inputlog_part_string.starts_with(">player p2") {
-                            let res = INPUTLOG_ANONYMIZER_REGEX
-                                .replace_all(inputlog_part_string, |_: &regex::Captures| {
-                                    format!("\"name\":\"{}\",", p2_anon)
-                                })
-                                .into_owned();
-                            return Some(res);
+                            Some(format!(">player p2 {{\\\"\\\"name\\\":\\\"{}\\\"}}", p2))
                         } else if inputlog_part_string.starts_with(">chat ") {
-                            return None;
+                            None
+                        } else {
+                            Some(
+                                inputlog_part
+                                    .as_str()
+                                    .expect("input log contained non-string values")
+                                    .to_string(),
+                            )
                         }
-
-                        Some(
-                            inputlog_part
-                                .as_str()
-                                .expect("input log contained non-string values")
-                                .to_string(),
-                        )
                     })
                     .collect::<Vec<_>>(),
             );
@@ -180,6 +177,8 @@ impl Anonymizer {
                 &regex::escape(p1),
                 "|",
                 &regex::escape(&p1_id),
+                "|",
+                &regex::escape(&p1_escaped),
                 ")",
             ]
             .join(""),
@@ -190,6 +189,8 @@ impl Anonymizer {
                 &regex::escape(p2),
                 "|",
                 &regex::escape(&p2_id),
+                "|",
+                &regex::escape(&p2_escaped),
                 ")",
             ]
             .join(""),
@@ -227,12 +228,18 @@ impl Anonymizer {
                             || log_part_string.starts_with("|raw|")
                             || log_part_string.starts_with("|player|")
                         {
+                            if log_part_string.contains("'s rating: ") {
+                                return None;
+                            }
+
                             return Some(
                                 log_part_string
                                     .replace(p1, &p1_anon)
                                     .replace(p2, &p2_anon)
                                     .replace(&p1_id, &p1_anon)
-                                    .replace(&p2_id, &p2_anon),
+                                    .replace(&p2_id, &p2_anon)
+                                    .replace(&p1_escaped, &p1_anon)
+                                    .replace(&p2_escaped, &p2_anon),
                             );
                         }
 
@@ -256,8 +263,10 @@ impl Anonymizer {
         if self.is_safe
             && (result.contains(p1)
                 || result.contains(&p1_id)
+                || result.contains(&p1_escaped)
                 || result.contains(p2)
-                || result.contains(&p2_id))
+                || result.contains(&p2_id)
+                || result.contains(&p2_escaped))
         {
             return Err(BattleToolsError::IncompleteAnonymization(
                 json["roomid"].to_string(),

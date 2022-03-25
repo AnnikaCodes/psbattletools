@@ -11,3 +11,13 @@ lazy_static! {
 pub fn to_id(str: &str) -> String {
     (*ID_REGEX.replace_all(str, "")).to_lowercase()
 }
+
+pub fn escape(str: &str) -> String {
+    str.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&apos;")
+        .replace('\\', "&#x2f;")
+        .replace('\n', "<br />")
+}
