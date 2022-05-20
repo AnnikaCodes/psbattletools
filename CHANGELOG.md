@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.2.4
+- Add Glicko ratings to anonymized battle logs.
+
 ## v0.2.3
 - Fix argument parsing
 
