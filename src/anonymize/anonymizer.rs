@@ -122,14 +122,32 @@ impl Anonymizer {
         json_result["p2"] = json::from(p2_anon.clone());
         json_result["winner"] = json::from(winner_anon);
 
-        json_result["p1rating"] = match json["p1rating"]["elo"].to_string().parse::<f64>() {
-            Ok(elo) => json::from((elo / 50.0).round() * 50.0),
-            Err(_) => json::JsonValue::Null,
-        };
-        json_result["p2rating"] = match json["p2rating"]["elo"].to_string().parse::<f64>() {
-            Ok(elo) => json::from((elo / 50.0).round() * 50.0),
-            Err(_) => json::JsonValue::Null,
-        };
+        // Does this need to work for multi battles?
+        for player_rating in ["p1rating", "p2rating"] {
+            // ELO rounded to the nearest 50
+            let anon_elo = match json[player_rating]["elo"].to_string().parse::<f64>() {
+                Ok(elo) => json::from((elo / 50.0).round() * 50.0),
+                Err(_) => json::JsonValue::Null,
+            };
+
+            // `rpr` rounded to the nearest 50
+            let anon_rpr = match json[player_rating]["rpr"].to_string().parse::<f64>() {
+                Ok(elo) => json::from((elo / 50.0).round() * 50.0),
+                Err(_) => json::JsonValue::Null,
+            };
+
+            // `rprd` rounded to the nearest 10
+            let anon_rprd = match json[player_rating]["rprd"].to_string().parse::<f64>() {
+                Ok(elo) => json::from((elo / 10.0).round() * 10.0),
+                Err(_) => json::JsonValue::Null,
+            };
+
+            json_result[player_rating] = json::object! {
+                "elo" => anon_elo,
+                "rpr" => anon_rpr,
+                "rprd" => anon_rprd,
+            };
+        }
 
         json_result["roomid"] = json::JsonValue::Null;
 
